@@ -9,6 +9,7 @@ from graphics import *
         Also, label the player boards
 """
 
+
 def main():
     root = Tk()
    
@@ -17,7 +18,12 @@ def main():
     root.config(bg='White')
     board = Board()
     main_player = Player() # Human-controlled player
-    grill_tiles = create_label_frames(root)
+    frames = create_label_frames(root)
+    create_player_labels(frames, main_player, board)
+    
+    # TODO: set up other players w/ objects
+
+    start_round()
 
     root.mainloop()
     pass
@@ -47,18 +53,60 @@ class Player:
     6's are worms
     """
     def roll_dice(self):
-        num_dice = 8 - len(self.__dice_kept)
+        num_dice = 8
         rolls = []
         for x in range(num_dice):
             rolls.append(random.randint(1, 6))
 
+        # print(rolls)
+
         # Change player GUI
+        dice_buttons = self.__player_objects['dice roll']
+        for x in range(len(dice_buttons)):
+            die = dice_buttons[x]
+            if (rolls[x] == 6) and die != None:
+                die['text'] = 'W'
+            elif die != None:
+                die['text'] = rolls[x]
+            
+            if die != None:
+                die['state'] = ['normal']
+                if rolls[x] == 1:
+                    die['command'] = lambda: self.select_dice(1)
+                elif rolls[x] == 2:
+                    die['command'] = lambda: self.select_dice(2)
+                elif rolls[x] == 3:
+                    die['command'] = lambda: self.select_dice(3)
+                elif rolls[x] == 4:
+                    die['command'] = lambda: self.select_dice(4)
+                elif rolls[x] == 5:
+                    die['command'] = lambda: self.select_dice(5)
+                elif rolls[x] == 6:
+                    die['command'] = lambda: self.select_dice('W')
 
         return rolls
 
     def pop_tile(self):
         return self.__tiles.pop()
-
+    
+    def select_dice(self, number):
+        for x in range(len(self.__player_objects['dice roll'])):
+            die = self.__player_objects['dice roll'][x]
+            if die != None and number == die['text']:
+                die.grid(row=3)
+                die['command'] = lambda: self.deselect_dice(number)
+                self.__player_objects['dice held'][x] = self.__player_objects['dice roll'][x]
+                self.__player_objects['dice roll'][x] = None
+    
+    def deselect_dice(self, number):
+        for x in range(len(self.__player_objects['dice held'])):
+            die = self.__player_objects['dice held'][x]
+            if die != None and number == die['text']:
+                die.grid(row=2)
+                die['command'] = lambda: self.select_dice(number)
+                self.__player_objects['dice roll'][x] = die
+                self.__player_objects['dice held'][x] = None
+                    
 
 class Board:
     def __init__(self):
@@ -77,13 +125,15 @@ class Board:
         else:
             print("ERROR: Tile not in grill.")
             print("TILE: ", tile)
-        
 
     # Place a tile back onto the board after a player loses it.
     def replace_tile(self, player):
         tile = player.pop_tile()
         tile['status'] = 'grill'
         # TODO: sort tile into correct list index
+
+    def set_grill_tiles(self, grill_tiles):
+        self.__grill_tiles = grill_tiles
 
     """
     Reset the grill for a new game.
@@ -102,6 +152,8 @@ class Board:
             if x % 4 == 0:
                 point_val += 1
 
-    
+def start_round():
+    pass
+
 if __name__ == '__main__':
     main()

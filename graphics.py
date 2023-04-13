@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+# from main import Board, Player
 
 """
 I want a 3x3 grid of labels in which I can place my grill,
@@ -17,17 +18,56 @@ def create_label_frames(root):
             frame_row.append(frame)
         frames.append(frame_row)
     
-    # set up player stations, will need to apply them to the players so they can change them
-    # TODO: add Player object to gen_mats; might just have create_label_frames return the dictionaries for the player and board
-    generate_player_mats(0, 1, frames)  # top
-    generate_player_mats(1, 0, frames)  # left
-    generate_player_mats(1, 2, frames)  # right
-    generate_player_mats(2, 1, frames)  # bottom
-    
-    # Set up grill
-    grill = generate_grill(1, 1, frames)  # TODO: add to Board class
+    return frames
 
-    return grill
+# TODO: could later make the main_player argument a list with the # players selected
+def create_player_labels(frames, main_player, board):
+     # set up player stations
+    p1 = generate_player_mat(2, 1, frames, main_player)
+    main_player.set_player_objects(p1)
+    generate_player_mat(1, 0, frames, None)  # left
+    generate_player_mat(0, 1, frames, None)  # top
+    generate_player_mat(1, 2, frames, None)  # right
+    board.set_grill_tiles(generate_grill(1, 1, frames))
+
+
+
+def generate_player_mat(row, col, frames, main_player):
+    player_frame = frames[row][col]
+    empty_button = Button(player_frame, text='/', state=['disabled'])
+
+    # Text labels
+    Label(player_frame, text='Points:').grid(row=0, column=0)
+    Label(player_frame, text='Top Tile:').grid(row=1, column=0)
+    Label(player_frame, text='Dice\nRolled:').grid(row=2, column=0)
+    Label(player_frame, text='Dice Held:').grid(row=3, column=0)
+
+    # Counters/dice
+    points = Label(player_frame, text='0')
+    points.grid(row=0, column=1)
+    tiles = Label(player_frame, text='None')  # Only ever shows top most tile
+    tiles.grid(row=1, column=1)
+    dice_roll = []
+    for x in range(8): 
+        die = Button(player_frame, text='/', state=['disabled'],
+                     height='1', width='1')
+        die.grid(row=2, column=x+1)        
+        dice_roll.append(die)
+    
+    player_objects = {'points': points, 'tiles': tiles, 'dice roll': dice_roll,
+                      'dice held': [None, None, None, None, None, None,
+                                    None, None]} 
+
+    if main_player: 
+        roll_dice = Button(player_frame, text='Roll!', 
+                           command=lambda: main_player.roll_dice(), 
+                           state=['normal'])
+        roll_dice.grid(row=4, column=0)
+        player_objects['button'] = roll_dice
+
+
+    return player_objects
+
 
 def generate_grill(row, col, frames):
     grill_frame = frames[row][col]
@@ -42,49 +82,9 @@ def generate_grill(row, col, frames):
             bratwurm_tile = Button(grill_frame, text=f'{x} Worms\n{point_val} Pts')
             bratwurm_tile.grid(row=point_val, column=col)
             grill_tiles.append(bratwurm_tile)
-            # Calculate point value
+
             if x % 4 == 0: point_val += 1
 
             col = 0 if col == 3 else col + 1
 
     return grill_tiles
-
-
-
-def generate_player_mats(row, col, frames):
-    player_frame = frames[row][col]
-
-    # Text labels
-    Label(player_frame, text='Points:').grid(row=0, column=0)
-    Label(player_frame, text='Top Tile:').grid(row=1, column=0)
-    Label(player_frame, text='Dice\nRolled:').grid(row=2, column=0)
-    Label(player_frame, text='Dice Held:').grid(row=3, column=0)
-
-    # Counters/dice
-    points = Label(player_frame, text='0')
-    points.grid(row=0, column=1)
-    tiles = Label(player_frame, text='None')  # Only ever shows top most tile
-    tiles.grid(row=1, column=1)
-    dice_roll = []
-
-    # TODO: Only real player's dice should be clickable
-    for x in range(8):
-        # NTS: enable with '!disabled'
-        die = Button(player_frame, text='/', command=lambda: print_1(),
-                      state=['disabled'], height='1', width='1')
-        die.grid(row=2, column=x+1)
-        dice_roll.append(die)
-    
-    dice_held = []
-
-    if True: # TODO: change to if real player
-        roll_dice = Button(player_frame, text='Roll!', 
-                           command=lambda: print_1(), state=['disabled'])
-        roll_dice.grid(row=4, column=0)
-
-
-    # TODO: add to player?
-
-
-def print_1():
-    print(1)
