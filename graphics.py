@@ -56,7 +56,7 @@ def generate_player_mat(row, col, frames, main_player):
     
     player_objects = {'points': points, 'tiles': tiles, 'dice roll': dice_roll,
                       'dice held': [None, None, None, None, None, None,
-                                    None, None]} 
+                                    None, None], 'button': None} 
 
     if main_player: 
         roll_dice = Button(player_frame, text='Roll!', 

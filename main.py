@@ -33,8 +33,8 @@ def main():
 class Player:
     def __init__(self):
         self.__tiles = []  # stores numbered tiles gathered. most recent at top
-        self.__dice_kept = []  # stores the dice selected by the player during the round.
         self.__player_objects = {}  # labels that keep track of the player's station
+        self.__rolls_kept = []
 
     def set_player_objects(self, po_dictionary):
         self.__player_objects = po_dictionary
@@ -58,31 +58,42 @@ class Player:
         for x in range(num_dice):
             rolls.append(random.randint(1, 6))
 
-        # print(rolls)
-
         # Change player GUI
         dice_buttons = self.__player_objects['dice roll']
         for x in range(len(dice_buttons)):
             die = dice_buttons[x]
-            if (rolls[x] == 6) and die != None:
-                die['text'] = 'W'
-            elif die != None:
-                die['text'] = rolls[x]
+            roll_number = rolls[x]
+            if (rolls[x] == 6):
+                roll_number = 'W'
+            if die != None:
+                die['text'] = roll_number
             
             if die != None:
-                die['state'] = ['normal']
-                if rolls[x] == 1:
+                if roll_number in self.__rolls_kept:
+                    die['state'] = ['disabled']
+                else:
+                    die['state'] = ['normal']
+
+                if roll_number == 1:
                     die['command'] = lambda: self.select_dice(1)
-                elif rolls[x] == 2:
+                elif roll_number == 2:
                     die['command'] = lambda: self.select_dice(2)
-                elif rolls[x] == 3:
+                elif roll_number == 3:
                     die['command'] = lambda: self.select_dice(3)
-                elif rolls[x] == 4:
+                elif roll_number == 4:
                     die['command'] = lambda: self.select_dice(4)
-                elif rolls[x] == 5:
+                elif roll_number == 5:
                     die['command'] = lambda: self.select_dice(5)
-                elif rolls[x] == 6:
+                elif roll_number == 'W':
                     die['command'] = lambda: self.select_dice('W')
+
+        if self.__player_objects['button'] is not None:
+            self.__player_objects['button']['state'] = ['disabled']
+            # Disable previous choice
+            for x in self.__player_objects['dice held']:
+                if x is not None:
+                    x['state'] = ['disabled']
+
 
         return rolls
 
@@ -91,21 +102,40 @@ class Player:
     
     def select_dice(self, number):
         for x in range(len(self.__player_objects['dice roll'])):
+            self.__rolls_kept.append(number)
             die = self.__player_objects['dice roll'][x]
-            if die != None and number == die['text']:
+            
+            if die != None and number == die['text']:  
+                # Move dice to dice held
                 die.grid(row=3)
                 die['command'] = lambda: self.deselect_dice(number)
                 self.__player_objects['dice held'][x] = self.__player_objects['dice roll'][x]
                 self.__player_objects['dice roll'][x] = None
+            elif die != None:  # Disable unselected dice
+                die['state'] = ['disabled']
+        
+        if self.__player_objects['button'] is not None:  # Enable Roll! button
+            self.__player_objects['button']['state'] = ['normal']
+
     
     def deselect_dice(self, number):
         for x in range(len(self.__player_objects['dice held'])):
+            self.__rolls_kept.remove(number)
             die = self.__player_objects['dice held'][x]
-            if die != None and number == die['text']:
+
+            if die != None and number == die['text']: #
                 die.grid(row=2)
                 die['command'] = lambda: self.select_dice(number)
                 self.__player_objects['dice roll'][x] = die
                 self.__player_objects['dice held'][x] = None
+                
+                if self.__player_objects['button'] is not None:  
+                    # Disable Roll! button
+                    self.__player_objects['button']['state'] = ['disabled']
+
+        for x in self.__player_objects['dice roll']: # Re-enable rolled dice
+            if x is not None: x['state'] = ['normal']
+                
                     
 
 class Board:
