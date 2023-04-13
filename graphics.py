@@ -34,7 +34,6 @@ def create_player_labels(frames, main_player, board):
 
 def generate_player_mat(row, col, frames, main_player):
     player_frame = frames[row][col]
-    empty_button = Button(player_frame, text='/', state=['disabled'])
 
     # Text labels
     Label(player_frame, text='Points:').grid(row=0, column=0)
@@ -47,6 +46,8 @@ def generate_player_mat(row, col, frames, main_player):
     points.grid(row=0, column=1)
     tiles = Label(player_frame, text='None')  # Only ever shows top most tile
     tiles.grid(row=1, column=1)
+    dice_points = Label(player_frame, text='(0)')
+    dice_points.grid(row=4, column=0)
     dice_roll = []
     for x in range(8): 
         die = Button(player_frame, text='/', state=['disabled'],
@@ -56,13 +57,14 @@ def generate_player_mat(row, col, frames, main_player):
     
     player_objects = {'points': points, 'tiles': tiles, 'dice roll': dice_roll,
                       'dice held': [None, None, None, None, None, None,
-                                    None, None], 'button': None} 
+                                    None, None], 
+                      'button': None, 'dice points': dice_points} 
 
     if main_player: 
         roll_dice = Button(player_frame, text='Roll!', 
                            command=lambda: main_player.roll_dice(), 
                            state=['normal'])
-        roll_dice.grid(row=4, column=0)
+        roll_dice.grid(row=5, column=0)
         player_objects['button'] = roll_dice
 
 

@@ -33,16 +33,27 @@ def main():
 class Player:
     def __init__(self):
         self.__tiles = []  # stores numbered tiles gathered. most recent at top
-        self.__player_objects = {}  # labels that keep track of the player's station
         self.__rolls_kept = []
+        self.__dice_roll = []
+        self.__dice_held = []
+        self.__lbl_victory_pts = None
+        self.__lbl_dice_pts = None
+        self.__lbl_top_tile = None
+        self.__btn_roll = None
 
     def set_player_objects(self, po_dictionary):
-        self.__player_objects = po_dictionary
+        self.__dice_roll = po_dictionary['dice roll']
+        self.__dice_held = po_dictionary['dice held']
+        self.__lbl_victory_pts = po_dictionary['points']
+        self.__lbl_dice_pts = po_dictionary['dice points']
+        self.__lbl_top_tile = po_dictionary['tiles']
+        self.__btn_roll = po_dictionary['button']
+
 
     """
     Returns the number of points the player has currently acquired. 
     """
-    def get_active_points(self):
+    def get_victory_points(self):
         points = 0
         for x in self.__tiles:
             points += x['points']
@@ -59,7 +70,7 @@ class Player:
             rolls.append(random.randint(1, 6))
 
         # Change player GUI
-        dice_buttons = self.__player_objects['dice roll']
+        dice_buttons = self.__dice_roll
         for x in range(len(dice_buttons)):
             die = dice_buttons[x]
             roll_number = rolls[x]
@@ -87,10 +98,10 @@ class Player:
                 elif roll_number == 'W':
                     die['command'] = lambda: self.select_dice('W')
 
-        if self.__player_objects['button'] is not None:
-            self.__player_objects['button']['state'] = ['disabled']
+        if self.__btn_roll is not None:
+            self.__btn_roll['state'] = ['disabled']
             # Disable previous choice
-            for x in self.__player_objects['dice held']:
+            for x in self.__dice_held:
                 if x is not None:
                     x['state'] = ['disabled']
 
@@ -101,40 +112,59 @@ class Player:
         return self.__tiles.pop()
     
     def select_dice(self, number):
-        for x in range(len(self.__player_objects['dice roll'])):
-            self.__rolls_kept.append(number)
-            die = self.__player_objects['dice roll'][x]
+        for x in range(len(self.__dice_roll)):            
+            die = self.__dice_roll[x]
             
             if die != None and number == die['text']:  
                 # Move dice to dice held
+                self.__rolls_kept.append(number)
                 die.grid(row=3)
                 die['command'] = lambda: self.deselect_dice(number)
-                self.__player_objects['dice held'][x] = self.__player_objects['dice roll'][x]
-                self.__player_objects['dice roll'][x] = None
+                self.__dice_held[x] = self.__dice_roll[x]
+                self.__dice_roll[x] = None
+                
+                
+
             elif die != None:  # Disable unselected dice
                 die['state'] = ['disabled']
         
-        if self.__player_objects['button'] is not None:  # Enable Roll! button
-            self.__player_objects['button']['state'] = ['normal']
+        if self.__btn_roll is not None:  # Enable Roll! button
+            self.__btn_roll['state'] = ['normal']
+
+        # Update dice points  
+        d_pts = 0
+        for x in self.__rolls_kept:
+            d_pts += 5 if x == 'W' else + x
+        self.__lbl_dice_pts['text'] = f'({d_pts})'
 
     
     def deselect_dice(self, number):
-        for x in range(len(self.__player_objects['dice held'])):
-            self.__rolls_kept.remove(number)
-            die = self.__player_objects['dice held'][x]
+        for x in range(len(self.__dice_held)):
+            die = self.__dice_held[x]
 
-            if die != None and number == die['text']: #
+            if die != None and number == die['text']:
+                # Move dice to dice rolled
+                self.__rolls_kept.remove(number)
                 die.grid(row=2)
                 die['command'] = lambda: self.select_dice(number)
-                self.__player_objects['dice roll'][x] = die
-                self.__player_objects['dice held'][x] = None
+                self.__dice_roll[x] = die
+                self.__dice_held[x] = None
                 
-                if self.__player_objects['button'] is not None:  
+                if self.__btn_roll is not None:  
                     # Disable Roll! button
-                    self.__player_objects['button']['state'] = ['disabled']
+                    self.__btn_roll['state'] = ['disabled']
 
-        for x in self.__player_objects['dice roll']: # Re-enable rolled dice
+        for x in self.__dice_roll: # Re-enable rolled dice
             if x is not None: x['state'] = ['normal']
+
+
+# col = 0 if col == 3 else col + 1
+        # Update dice points  
+        d_pts = 0
+        for x in self.__rolls_kept:
+            d_pts += 5 if x == 'W' else + x
+            
+        self.__lbl_dice_pts['text'] = f'({d_pts})'
                 
                     
 
@@ -176,7 +206,8 @@ class Board:
         self.__grill = []
         point_val = 1
         for x in range(21, 37):
-            self.__grill.append({'val': x, 'points': point_val,'status': 'grill'})
+            self.__grill.append({'val': x, 'points': point_val,
+                                 'status': 'grill'})
             
             # Calculates the correct point values for each tile
             if x % 4 == 0:
