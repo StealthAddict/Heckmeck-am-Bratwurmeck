@@ -7,6 +7,9 @@ from graphics import *
     TODO: Later, use one of the corner frames to display messages
         like: 'Player 2's turn'.
         Also, label the player boards
+
+    TODO: make it so the grill tiles are disabled until the player has
+        enough points. Player ends their turn by selecting a tile
 """
 
 
@@ -20,7 +23,7 @@ def main():
     main_player = Player() # Human-controlled player
     frames = create_label_frames(root)
     create_player_labels(frames, main_player, board)
-    
+    main_player.assign_board(board)
     # TODO: set up other players w/ objects
 
     start_round()
@@ -32,13 +35,14 @@ def main():
 
 class Player:
     def __init__(self):
+        self.__board = None
         self.__tiles = []  # stores numbered tiles gathered. most recent at top
         self.__rolls_kept = []
         self.__dice_roll = []
         self.__dice_held = []
         self.__lbl_victory_pts = None
         self.__lbl_dice_pts = None
-        self.__lbl_top_tile = None
+        self.__btn_top_tile = None
         self.__btn_roll = None
 
     def set_player_objects(self, po_dictionary):
@@ -46,9 +50,11 @@ class Player:
         self.__dice_held = po_dictionary['dice held']
         self.__lbl_victory_pts = po_dictionary['points']
         self.__lbl_dice_pts = po_dictionary['dice points']
-        self.__lbl_top_tile = po_dictionary['tiles']
+        self.__btn_top_tile = po_dictionary['tile']
         self.__btn_roll = po_dictionary['button']
 
+    def assign_board(self, board):
+        self.__board = board
 
     """
     Returns the number of points the player has currently acquired. 
@@ -61,7 +67,7 @@ class Player:
         return points
     
     """
-    6's are worms
+    6's are worms worth 5 pts
     """
     def roll_dice(self):
         num_dice = 8
@@ -131,13 +137,9 @@ class Player:
         if self.__btn_roll is not None:  # Enable Roll! button
             self.__btn_roll['state'] = ['normal']
 
-        # Update dice points  
-        d_pts = 0
-        for x in self.__rolls_kept:
-            d_pts += 5 if x == 'W' else + x
-        self.__lbl_dice_pts['text'] = f'({d_pts})'
+        self.__update_dice_points()
 
-    
+
     def deselect_dice(self, number):
         for x in range(len(self.__dice_held)):
             die = self.__dice_held[x]
@@ -156,15 +158,21 @@ class Player:
 
         for x in self.__dice_roll: # Re-enable rolled dice
             if x is not None: x['state'] = ['normal']
+        
+        self.__update_dice_points()
 
+        
 
-# col = 0 if col == 3 else col + 1
+    def __update_dice_points(self):
         # Update dice points  
         d_pts = 0
         for x in self.__rolls_kept:
             d_pts += 5 if x == 'W' else + x
             
         self.__lbl_dice_pts['text'] = f'({d_pts})'
+
+        # Update grill
+        self.__board.update_grill_status(d_pts)
                 
                     
 
@@ -194,6 +202,15 @@ class Board:
 
     def set_grill_tiles(self, grill_tiles):
         self.__grill_tiles = grill_tiles
+
+    def update_grill_status(self, dice_pts):
+        for x in range(len(self.__grill_tiles)):
+            # if the value is == to dice_pts, activate the button at __grill_tiles[x] 
+            if self.__grill[x]['val'] <= dice_pts:
+                self.__grill_tiles[x]['state'] = ['normal']
+            elif self.__grill[x]['val'] > dice_pts:
+                self.__grill_tiles[x]['state'] = ['disabled']
+            
 
     """
     Reset the grill for a new game.

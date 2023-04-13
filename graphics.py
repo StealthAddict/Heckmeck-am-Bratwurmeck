@@ -44,8 +44,8 @@ def generate_player_mat(row, col, frames, main_player):
     # Counters/dice
     points = Label(player_frame, text='0')
     points.grid(row=0, column=1)
-    tiles = Label(player_frame, text='None')  # Only ever shows top most tile
-    tiles.grid(row=1, column=1)
+    tile = Button(player_frame, text='None', state=['disabled'])  # Only ever shows top most tile
+    tile.grid(row=1, column=1, columnspan=2)
     dice_points = Label(player_frame, text='(0)')
     dice_points.grid(row=4, column=0)
     dice_roll = []
@@ -55,7 +55,7 @@ def generate_player_mat(row, col, frames, main_player):
         die.grid(row=2, column=x+1)        
         dice_roll.append(die)
     
-    player_objects = {'points': points, 'tiles': tiles, 'dice roll': dice_roll,
+    player_objects = {'points': points, 'tile': tile, 'dice roll': dice_roll,
                       'dice held': [None, None, None, None, None, None,
                                     None, None], 
                       'button': None, 'dice points': dice_points} 
@@ -81,7 +81,8 @@ def generate_grill(row, col, frames):
     point_val = 1
     col = 0
     for x in range(21, 37):
-            bratwurm_tile = Button(grill_frame, text=f'{x} Worms\n{point_val} Pts')
+            bratwurm_tile = Button(grill_frame, text=f'{x} Worms\n{point_val} Pts',
+                                   state=['disabled'])
             bratwurm_tile.grid(row=point_val, column=col)
             grill_tiles.append(bratwurm_tile)
 
