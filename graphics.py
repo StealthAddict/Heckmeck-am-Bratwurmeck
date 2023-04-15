@@ -20,6 +20,7 @@ def create_label_frames(root):
     
     return frames
 
+
 # TODO: could later make the main_player argument a list with the # players selected
 def create_player_labels(frames, main_player, board):
      # set up player stations
@@ -28,8 +29,7 @@ def create_player_labels(frames, main_player, board):
     generate_player_mat(1, 0, frames, None)  # left
     generate_player_mat(0, 1, frames, None)  # top
     generate_player_mat(1, 2, frames, None)  # right
-    board.set_grill_tiles(generate_grill(1, 1, frames))
-
+    board.set_grill_tiles(generate_grill(1, 1, frames, main_player, board))
 
 
 def generate_player_mat(row, col, frames, main_player):
@@ -45,7 +45,7 @@ def generate_player_mat(row, col, frames, main_player):
     points = Label(player_frame, text='0')
     points.grid(row=0, column=1)
     tile = Button(player_frame, text='None', state=['disabled'])  # Only ever shows top most tile
-    tile.grid(row=1, column=1, columnspan=2)
+    tile.grid(row=1, column=1, columnspan=3)
     dice_points = Label(player_frame, text='(0)')
     dice_points.grid(row=4, column=0)
     dice_roll = []
@@ -67,11 +67,10 @@ def generate_player_mat(row, col, frames, main_player):
         roll_dice.grid(row=5, column=0)
         player_objects['button'] = roll_dice
 
-
     return player_objects
 
 
-def generate_grill(row, col, frames):
+def generate_grill(row, col, frames, main_player, board):
     grill_frame = frames[row][col]
     grill_tiles = []
 
@@ -81,13 +80,31 @@ def generate_grill(row, col, frames):
     point_val = 1
     col = 0
     for x in range(21, 37):
-            bratwurm_tile = Button(grill_frame, text=f'{x} Worms\n{point_val} Pts',
-                                   state=['disabled'])
+            bratwurm_tile = Button(grill_frame, state=['disabled'], 
+                           text=f'{x} Worms\n{point_val} Pts')
             bratwurm_tile.grid(row=point_val, column=col)
             grill_tiles.append(bratwurm_tile)
 
             if x % 4 == 0: point_val += 1
 
             col = 0 if col == 3 else col + 1
+
+    # Due to Python's referencing system, this must be explicitly written
+    grill_tiles[0]['command'] = lambda: board.pick_tile(main_player, 21)
+    grill_tiles[1]['command'] = lambda: board.pick_tile(main_player, 22)
+    grill_tiles[2]['command'] = lambda: board.pick_tile(main_player, 23)
+    grill_tiles[3]['command'] = lambda: board.pick_tile(main_player, 24)
+    grill_tiles[4]['command'] = lambda: board.pick_tile(main_player, 25)
+    grill_tiles[5]['command'] = lambda: board.pick_tile(main_player, 26)
+    grill_tiles[6]['command'] = lambda: board.pick_tile(main_player, 27)
+    grill_tiles[7]['command'] = lambda: board.pick_tile(main_player, 28)
+    grill_tiles[8]['command'] = lambda: board.pick_tile(main_player, 29)
+    grill_tiles[9]['command'] = lambda: board.pick_tile(main_player, 30)
+    grill_tiles[10]['command'] = lambda: board.pick_tile(main_player, 31)
+    grill_tiles[11]['command'] = lambda: board.pick_tile(main_player, 32)
+    grill_tiles[12]['command'] = lambda: board.pick_tile(main_player, 33)
+    grill_tiles[13]['command'] = lambda: board.pick_tile(main_player, 34)
+    grill_tiles[14]['command'] = lambda: board.pick_tile(main_player, 35)
+    grill_tiles[15]['command'] = lambda: board.pick_tile(main_player, 36)
 
     return grill_tiles
