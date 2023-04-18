@@ -2,6 +2,7 @@ import random
 from tkinter import *
 from tkinter import ttk
 from graphics import *
+import time 
 
 """
     TODO: Later, use one of the corner frames to display messages
@@ -25,13 +26,14 @@ def main():
     root.config(bg='White')
     board = Board()
     main_player = Player() # Human-controlled player
+    player_2 = Player()
+    player_3 = Player()
+    player_4 = Player()
+    players = [main_player, player_2, player_3, player_4]
     frames = create_label_frames(root)
-    create_player_labels(frames, main_player, board)
-    main_player.assign_board(board)
-    # TODO: set up other players w/ objects
+    create_player_labels(frames, players, board)
 
-    # start_round()
-
+    board.assign_players(players)
     root.mainloop()
     pass
 
@@ -48,17 +50,15 @@ class Player:
         self.__btn_top_tile = None
         self.__btn_roll = None
 
-    def set_player_objects(self, po_dictionary):
+    def set_player_objects(self, po_dictionary, board):
         self.__btns_dice_roll = po_dictionary['dice roll']
         self.__btns_dice_held = po_dictionary['dice held']
         self.__lbl_victory_pts = po_dictionary['points']
         self.__lbl_dice_pts = po_dictionary['dice points']
         self.__btn_top_tile = po_dictionary['tile']
         self.__btn_roll = po_dictionary['button']
-
-    def assign_board(self, board):
         self.__board = board
-    
+
     """
     6's are worms worth 5 pts
     """
@@ -106,10 +106,12 @@ class Player:
 
         return rolls
     
-    def append_tile(self, tile):
-        val = tile['val']
-        pts = tile['points']
-        self.__btn_top_tile['text'] = f'{val} Worms\n{pts} Pts'
+    def update_top_tile(self, tile):
+        self.__btn_top_tile['text'] = tile['object']['text']
+        if tile not in self.__tiles:
+            self.__tiles.append(tile)
+        else:
+            self.__tiles.remove(tile)
 
     def select_dice(self, number):
         for x in range(len(self.__btns_dice_roll)):            
@@ -166,11 +168,12 @@ class Player:
     def __update_victory_points(self):
         points = 0
         for x in self.__tiles:
-            points += int(x['text'][-5])
+            points += x['points']
 
         self.__lbl_victory_pts['text'] = points
 
     def end_turn(self):
+        # Reset dice
         self.__btn_roll['state'] = ['disabled']
         for x in range(len(self.__btns_dice_held)):
             if self.__btns_dice_held[x] != None:
@@ -182,23 +185,27 @@ class Player:
             self.__btns_dice_roll[x]['text'] = '/'
             self.__btns_dice_roll[x]['state'] = ['disabled']
 
-        if self.__btn_top_tile not in self.__tiles:
-            self.__tiles.append(self.__btn_top_tile)
-
         self.__rolls_kept = []
         self.__update_dice_points()
         self.__update_victory_points()
+        self.__board.activate_next_player()
 
+    def activate_play(self):
+       
+        """ run AI or for main, activate dice buttons
+            Could create a subclass for every player/AI type
+            and this one just immediately ends turn as its the player
+            thats not assigned to play
+        """
+        print("this player's turn!")
 
 class Board:
     def __init__(self):
-        self.__board = [] # for graphics
         self.__grill = [] # all available tiles on the board in ascending order.
-                          # tiles should be small dictionaries w/ val and status (on grill, w/ player, out of play)
-        self.__grill_tiles = [] # button objects of the tiles
-        self.__players = [] # list of Player objects playing the game
+        self.players = [] # list of Player objects playing the game
+        self.__next_player = 0  # index of next player
+        self.__game_over = False
         
-        self.__set_up_grill()
 
     # Place a tile back onto the board after a player loses it.
     def replace_tile(self, player):
@@ -206,16 +213,15 @@ class Board:
         tile['status'] = 'grill'
         # TODO: sort tile into correct list index
 
-    def set_grill_tiles(self, grill_tiles):
-        self.__grill_tiles = grill_tiles
-
     def update_grill_status(self, dice_pts):
-        for x in range(len(self.__grill_tiles)):
-            if self.__grill[x] is not None:
+        for x in range(len(self.__grill)):
+            if self.__grill[x] is not None and self.__grill[x]['status'] == 'grill':
                 if self.__grill[x]['val'] <= dice_pts:
-                    self.__grill_tiles[x]['state'] = ['normal']
+                    self.__grill[x]['object']['state'] = ['normal']
                 elif self.__grill[x]['val'] > dice_pts:
-                    self.__grill_tiles[x]['state'] = ['disabled']            
+                    self.__grill[x]['object']['state'] = ['disabled']    
+            elif self.__grill[x] is not None and self.__grill[x]['val'] == dice_pts:
+                self.__grill[x]['object']['state'] = ['normal']
 
     """
     Reset the grill for a new game.
@@ -224,12 +230,13 @@ class Board:
                   'points' - the # of points awarded by the tile
                   'status' - where the tile currently is/availability
     """
-    def __set_up_grill(self):
+    def set_up_grill(self, grill_tiles):
         self.__grill = []
         point_val = 1
         for x in range(21, 37):
             self.__grill.append({'val': x, 'points': point_val,
-                                 'status': 'grill'})
+                                 'status': 'grill', 
+                                 'object': grill_tiles[x - 21]})
             
             # Calculates the correct point values for each tile
             if x % 4 == 0:
@@ -237,16 +244,21 @@ class Board:
 
     def pick_tile(self, player, tile_idx):
         tile = self.__grill[tile_idx - 21]
-        player.append_tile(tile)
+        player.update_top_tile(tile)
         player.end_turn()
 
-        self.__grill[tile_idx - 21] = None
-        self.__grill_tiles[tile_idx - 21]['state'] = ['disabled']
+        self.__grill[tile_idx - 21]['status'] = player
+        self.__grill[tile_idx - 21]['object']['state'] = ['disabled']
 
-             
+    def assign_players(self, player_list):
+        self.players = player_list
 
-def start_round():
-    pass
+    def activate_next_player(self):
+        if not self.__game_over:
+            self.players[self.__next_player].activate_play()
+            self.__next_player = 0 if self.__next_player == 3 else + 1
+        else:
+            print('GAME OVER')
 
 
 if __name__ == '__main__':

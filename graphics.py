@@ -22,14 +22,18 @@ def create_label_frames(root):
 
 
 # TODO: could later make the main_player argument a list with the # players selected
-def create_player_labels(frames, main_player, board):
+def create_player_labels(frames, players, board):
      # set up player stations
-    p1 = generate_player_mat(2, 1, frames, main_player)
-    main_player.set_player_objects(p1)
-    generate_player_mat(1, 0, frames, None)  # left
-    generate_player_mat(0, 1, frames, None)  # top
-    generate_player_mat(1, 2, frames, None)  # right
-    board.set_grill_tiles(generate_grill(1, 1, frames, main_player, board))
+
+    p1 = generate_player_mat(2, 1, frames, players[0])
+    players[0].set_player_objects(p1, board)
+    p2 = generate_player_mat(1, 0, frames, False)  # left
+    players[1].set_player_objects(p2, board)
+    p3 = generate_player_mat(0, 1, frames, False)  # top
+    players[2].set_player_objects(p3, board)
+    p4 = generate_player_mat(1, 2, frames, False)  # right
+    players[3].set_player_objects(p4, board)
+    board.set_up_grill(generate_grill(1, 1, frames, players[0], board))
 
 
 def generate_player_mat(row, col, frames, main_player):
