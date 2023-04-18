@@ -21,7 +21,6 @@ def create_label_frames(root):
     return frames
 
 
-# TODO: could later make the main_player argument a list with the # players selected
 def create_player_labels(frames, players, board):
      # set up player stations
 
@@ -34,6 +33,7 @@ def create_player_labels(frames, players, board):
     p4 = generate_player_mat(1, 2, frames, False)  # right
     players[3].set_player_objects(p4, board)
     board.set_up_grill(generate_grill(1, 1, frames, players[0], board))
+    generate_notification_square(2, 0, frames, board)
 
 
 def generate_player_mat(row, col, frames, main_player):
@@ -112,3 +112,10 @@ def generate_grill(row, col, frames, main_player, board):
     grill_tiles[15]['command'] = lambda: board.pick_tile(main_player, 36)
 
     return grill_tiles
+
+
+def generate_notification_square(row, col, frames, board):
+    lbl_notif = Label(frames[row][col])
+    lbl_notif.grid(row=0, column=0)
+    board.txt_notif = StringVar(lbl_notif, 'It\'s your turn!')
+    lbl_notif['textvariable'] =  board.txt_notif

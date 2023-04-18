@@ -26,10 +26,7 @@ def main():
     root.config(bg='White')
     board = Board()
     main_player = Player() # Human-controlled player
-    player_2 = Player()
-    player_3 = Player()
-    player_4 = Player()
-    players = [main_player, player_2, player_3, player_4]
+    players = [main_player, Player(), Player(), Player()]
     frames = create_label_frames(root)
     create_player_labels(frames, players, board)
 
@@ -84,18 +81,19 @@ class Player:
                 else:
                     die['state'] = ['normal']
 
-                if roll_number == 1:
-                    die['command'] = lambda: self.select_dice(1)
-                elif roll_number == 2:
-                    die['command'] = lambda: self.select_dice(2)
-                elif roll_number == 3:
-                    die['command'] = lambda: self.select_dice(3)
-                elif roll_number == 4:
-                    die['command'] = lambda: self.select_dice(4)
-                elif roll_number == 5:
-                    die['command'] = lambda: self.select_dice(5)
-                elif roll_number == 'W':
-                    die['command'] = lambda: self.select_dice('W')
+                match roll_number:
+                    case 1:
+                        die['command'] = lambda: self.select_dice(1)
+                    case 2:
+                        die['command'] = lambda: self.select_dice(2)
+                    case 3:
+                        die['command'] = lambda: self.select_dice(3)
+                    case 4:
+                        die['command'] = lambda: self.select_dice(4)
+                    case 5:
+                        die['command'] = lambda: self.select_dice(5)
+                    case 'W':
+                        die['command'] = lambda: self.select_dice('W')
 
         if self.__btn_roll is not None:
             self.__btn_roll['state'] = ['disabled']
@@ -103,6 +101,21 @@ class Player:
             for x in self.__btns_dice_held:
                 if x is not None:
                     x['state'] = ['disabled']
+
+        # Check for a bust
+        invalid_dice = 0
+        total_dice = 0
+        for x in self.__btns_dice_roll:
+            if x is not None:
+                total_dice += 1
+                if x['state'] == 'disabled':
+                    invalid_dice += 1
+        if invalid_dice == total_dice and total_dice != 0:
+            # should have a little notif in the player station instead to show 'busted'
+            self.__board.set_notification("Busted!")
+            self.end_turn()
+
+        # or if no tiles are 'normal' and total_dice == 0
 
         return rolls
     
@@ -205,6 +218,7 @@ class Board:
         self.players = [] # list of Player objects playing the game
         self.__next_player = 0  # index of next player
         self.__game_over = False
+        self.txt_notif = None
         
 
     # Place a tile back onto the board after a player loses it.
@@ -242,6 +256,9 @@ class Board:
             if x % 4 == 0:
                 point_val += 1
 
+    def set_notification(self, new_string):
+        self.txt_notif.set(new_string)        
+
     def pick_tile(self, player, tile_idx):
         tile = self.__grill[tile_idx - 21]
         player.update_top_tile(tile)
@@ -257,6 +274,7 @@ class Board:
         if not self.__game_over:
             self.players[self.__next_player].activate_play()
             self.__next_player = 0 if self.__next_player == 3 else + 1
+            self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
         else:
             print('GAME OVER')
 
