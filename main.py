@@ -8,7 +8,7 @@ def main():
     player_selection.title('Heckmeck am Bratwurmeck')
     player_selection.resizable(False, False)
     create_player_selection(player_selection)
-
+    # tk.Misc.tksleep = tksleep
     player_selection.mainloop()
 
 
@@ -23,18 +23,25 @@ class Board:
     def update_grill_status(self, dice_pts):
         """Update the button states of the grill's and players' top tiles
         according to the current roll points (dice_pts) of the player.
+            Returns all available tiles to current player.
         """
+        available_tiles = []
         for x in range(len(self.__grill)):
             if self.__grill[x] is not None:
                 if self.__grill[x]['status'] == 'grill':
                     if self.__grill[x]['val'] <= dice_pts:
                         self.__grill[x]['object']['state'] = ['normal']
+                        available_tiles.append(self.__grill[x])
                     elif self.__grill[x]['val'] > dice_pts:
                         self.__grill[x]['object']['state'] = ['disabled']  
 
                 elif self.__grill[x]['val'] == dice_pts and self.__grill[x]['status'] != 'OOP':
                     player = self.__grill[x]['status']
-                    player._btn_top_tile['state'] = ['normal']
+                    if player.get_top_tile() == self.__grill[x]:
+                        player._btn_top_tile['state'] = ['normal']
+                        available_tiles.append(self.__grill[x])
+
+        return available_tiles
 
     def set_up_grill(self, grill_tiles):
         """ Reset the grill for a new game.
@@ -83,6 +90,7 @@ class Board:
             else:
                 self.__next_player += 1
                 
+            print(f'ACTIVATE PLAYER {self.__next_player + 1}')
             self.__players[self.__next_player].activate_play()
             self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
 
@@ -161,6 +169,19 @@ def open_main_window(prev_win, num_players):
 
     frames = create_label_frames(root)
     create_game_labels(frames, players, board)
+
+
+def tksleep(t):
+    """A function to emulate time.sleep in tkinter created
+    by Thingmabobs on StackOverflow 
+    https://stackoverflow.com/a/74162322
+    """
+    'emulating time.sleep(seconds)'
+    ms = int(t*1000)
+    root = tk._get_default_root('sleep')
+    var = tk.IntVar(root)
+    root.after(ms, var.set, 1)
+    root.wait_variable(var)
 
 
 if __name__ == '__main__':

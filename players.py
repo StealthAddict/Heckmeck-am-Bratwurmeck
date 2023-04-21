@@ -1,6 +1,6 @@
 import random
-import time
 from tkinter import *
+from main import tksleep
 
 class MainPlayer():
 
@@ -24,7 +24,12 @@ class MainPlayer():
         self._btn_top_tile = po_dictionary['tile']
         self.__btn_roll = po_dictionary['button']
         self.__board = board
-    
+
+    def activate_play(self):
+        # Normalize roll! button
+        self.__btn_roll['state'] = ['normal']
+        self.txt_notif.set('')
+
     def roll_dice(self):
         """For use by roll! button. Randomly rolls dice between 1-6 for 
         the main player to select from. Dice that roll a 6 are indicated
@@ -78,47 +83,6 @@ class MainPlayer():
             self.__turn_bust("No selectable dice.")
 
         return rolls
-    
-    def __turn_bust(self, bust_str):
-        """A bust causes the top tile of the player's
-        tile stack to be returned to the grill. If no tiles
-        remain, the largest value grill tile is now out of play.
-        """
-        if len(self.__tiles) < 1:
-            self.__board.remove_tile_from_play()
-        else:
-            removed_tile = self.__tiles.pop(-1)
-            removed_tile['status'] = 'grill'
-            removed_tile['object']['state'] = ['disabled']
-            if len(self.__tiles) > 0:
-                self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
-
-        self.txt_notif.set(f'Busted!\n{bust_str}')
-        self.end_turn() 
-
-    def update_top_tile(self, tile):
-        """ Updates the player's tile button to be the tile parameter.
-        Adds the tile onto the player's collection of tiles.
-        """
-        self._btn_top_tile['text'] = tile['object']['text']
-        if tile not in self.__tiles:
-            self.__tiles.append(tile)
-        else:
-            self.__tiles.remove(tile)
-
-    def __get_ti_dice_cnt(self):
-        """ Returns the total dice left in the roll and the 
-        invalid dice in the roll. Invalid dice are dice the 
-        player cannot select.
-        """
-        invalid_dice = 0
-        total_dice = 0
-        for x in self.__btns_dice_roll:  # Check dice
-            if x is not None:
-                total_dice += 1
-                if x['state'] == 'disabled':
-                    invalid_dice += 1
-        return invalid_dice, total_dice
 
     def select_dice(self, number):
         """ Moves all dice of one number from the dice rolled row to the
@@ -187,6 +151,42 @@ class MainPlayer():
         
         self.__update_dice_points()  
 
+    def __get_ti_dice_cnt(self):
+        """ Returns the total dice left in the roll and the 
+        invalid dice in the roll. Invalid dice are dice the 
+        player cannot select.
+        """
+        invalid_dice = 0
+        total_dice = 0
+        for x in self.__btns_dice_roll:  # Check dice
+            if x is not None:
+                total_dice += 1
+                if x['state'] == 'disabled':
+                    invalid_dice += 1
+        return invalid_dice, total_dice
+
+    def get_top_tile(self):
+        if len(self.__tiles) > 0:
+            return self.__tiles[-1]
+        return None
+
+    def has_worms(self):
+        for x in self.__btns_dice_held:
+            if x is not None and x['text'] == 'W':
+                return True
+            
+        return False
+
+    def update_top_tile(self, tile):
+        """ Updates the player's tile button to be the tile parameter.
+        Adds the tile onto the player's collection of tiles.
+        """
+        self._btn_top_tile['text'] = tile['object']['text']
+        if tile not in self.__tiles:
+            self.__tiles.append(tile)
+        else:
+            self.__tiles.remove(tile)
+
     def __update_dice_points(self):
         """ Update dice points label and
         update grill status based on dice points.
@@ -208,8 +208,24 @@ class MainPlayer():
 
         self.__lbl_victory_pts['text'] = points
 
+    def __turn_bust(self, bust_str):
+        """A bust causes the top tile of the player's
+        tile stack to be returned to the grill. If no tiles
+        remain, the largest value grill tile is now out of play.
+        """
+        if len(self.__tiles) < 1:
+            self.__board.remove_tile_from_play()
+        else:
+            removed_tile = self.__tiles.pop(-1)
+            removed_tile['status'] = 'grill'
+            removed_tile['object']['state'] = ['disabled']
+            if len(self.__tiles) > 0:
+                self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+
+        self.txt_notif.set(f'Busted!\n{bust_str}')
+        self.end_turn() 
+
     def end_turn(self):
-        print("MAIN PLAYER CALLS ACTIVATE")
         # Reset dice
         self.__btn_roll['state'] = ['disabled']
         for x in range(len(self.__btns_dice_held)):
@@ -227,20 +243,6 @@ class MainPlayer():
         self.__update_victory_points()
         self.__board.activate_next_player()
 
-    def has_worms(self):
-        for x in self.__btns_dice_held:
-            if x is not None and x['text'] == 'W':
-                return True
-            
-        return False
-    
-    def activate_play(self):
-        # Normalize roll! button
-        self.__btn_roll['state'] = ['normal']
-
-        self.txt_notif.set('')
-        print("main player's turn")
-
 
 class Player():
     def __init__(self):
@@ -253,6 +255,7 @@ class Player():
         self.__lbl_dice_pts = None
         self._btn_top_tile = None
         self.__btn_roll = None
+        self.__busted = False
         self.txt_notif = StringVar()
 
     def set_player_objects(self, po_dictionary, board):
@@ -262,6 +265,37 @@ class Player():
         self.__lbl_dice_pts = po_dictionary['dice points']
         self._btn_top_tile = po_dictionary['tile']
         self.__board = board
+
+    def get_player_objects(self):
+        return {'board': self.__board, 'rolls kept': self.__rolls_kept,
+                'busted': self.__busted, 'lbls roll': self.__lbls_dice_roll}
+
+    def get_top_tile(self):
+        if len(self.__tiles) > 0:
+            return self.__tiles[-1]
+        return None
+
+    def __get_ti_dice_cnt(self):
+        """ Returns the total dice left in the roll and the 
+        invalid dice in the roll. Invalid dice are dice the 
+        player cannot select.
+        """
+        invalid_dice = 0
+        total_dice = 0
+        for x in self.__lbls_dice_roll:  # Check dice
+            if x is not None:
+                total_dice += 1
+                if x['text'] in self.__rolls_kept:
+                    invalid_dice += 1
+        return invalid_dice, total_dice
+
+    def activate_play(self):
+        self.deactivate_busted()
+        self.end_turn()
+        self.txt_notif.set('')
+
+    def deactivate_busted(self):
+        self.__busted = False
 
     def roll_dice(self):
         """Randomly rolls dice between 1-6 for the player to select from.
@@ -286,12 +320,87 @@ class Player():
             self.__btn_roll['state'] = ['disabled']
 
         # TODO: Check if the player can choose from the roll
-        # invalid_dice, total_dice = self.__get_ti_dice_cnt()
-        # if invalid_dice == total_dice and total_dice != 0:  
-        #     self.__turn_bust("No selectable dice.")
+        invalid_dice, total_dice = self.__get_ti_dice_cnt()
+        if invalid_dice == total_dice and total_dice != 0:  
+            self.turn_bust("No selectable dice.")
 
         return rolls
     
+    def select_dice(self, number):
+        """ Moves all dice of one number from the dice rolled row to the
+        dice kept row.
+        """
+        for x in range(len(self.__lbls_dice_roll)):            
+            die = self.__lbls_dice_roll[x]
+            
+            if die != None and number == die['text']:  
+                # Move dice to dice held
+                self.__rolls_kept.append(number)
+                die.grid(row=4)
+                self.__lbls_dice_held[x] = self.__lbls_dice_roll[x]
+                self.__lbls_dice_roll[x] = None
+        
+        d_pts = self.update_dice_points()
+
+        # TODO: Check if any tiles are selectable after there are no
+        # more dice to roll.
+        invalid_dice, total_dice = self.__get_ti_dice_cnt()
+        if total_dice == 0:
+            available_tile = False
+            grill = self.__board.get_grill()
+            for x in grill:
+                if x['val'] > d_pts:
+                    self.turn_bust("Can't purchase any tiles.")
+                    break
+                elif x['object']['state'] == 'normal':
+                    available_tile = True
+                    break
+            
+            if not available_tile:
+                self.turn_bust("Can't purchase any tiles.")
+
+            elif not self.has_worms():
+                self.turn_bust("You have no worms.")
+
+    def update_dice_points(self):
+        """ Update dice points label and
+        update grill status based on dice points.
+            Returns dice point amount.
+        """
+        d_pts = 0
+        for x in self.__rolls_kept:
+            d_pts += 5 if x == 'W' else + x
+            
+        self.__lbl_dice_pts['text'] = f'({d_pts})'
+        return d_pts
+
+    def __update_victory_points(self):
+        points = 0
+        for x in self.__tiles:
+            points += x['points']
+
+        self.__lbl_victory_pts['text'] = points
+
+    def turn_bust(self, bust_str):
+        """A bust causes the top tile of the player's
+        tile stack to be returned to the grill. If no tiles
+        remain, the largest value grill tile is now out of play.
+        """
+        if len(self.__tiles) < 1:
+            self.__board.remove_tile_from_play()
+        else:
+            removed_tile = self.__tiles.pop(-1)
+            removed_tile['status'] = 'grill'
+            removed_tile['object']['state'] = ['disabled']
+            if len(self.__tiles) > 0:
+                self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+
+        self.txt_notif.set(f'Busted!\n{bust_str}')
+        tksleep(2)
+        self.__busted = True
+        print("ENDING CASUAL TURN in [BUSTED]")
+        self.end_turn() 
+
     def end_turn(self):
         # Reset dice
         for x in range(len(self.__lbls_dice_held)):
@@ -303,14 +412,11 @@ class Player():
         for x in range(len(self.__lbls_dice_roll)):
             self.__lbls_dice_roll[x]['text'] = '/'
 
-        # self.__rolls_kept = []
-        # self.__update_dice_points()
-        # self.__update_victory_points()
+        self.__rolls_kept = []
+        self.update_dice_points()
+        self.__update_victory_points()
         self.__board.activate_next_player()
-    
-    def activate_play(self):
-        print('none player\'s turn')
-        self.end_turn()
+
 
 class CasualPlayer(Player):
 
@@ -318,18 +424,57 @@ class CasualPlayer(Player):
         parent = super(CasualPlayer, self)
         parent.__init__()
         self.__parent = parent
+        self.__dice_options = []
 
-    
     def activate_play(self):
+        self.deactivate_busted()
         # Perform casual player's actions
-        print("casual player's turn")
-        # roll dice
-        self.__parent.roll_dice()
-        # choose dice
-        # check if tiles are available
-        # repeat until desired points reached
-        # select a tile
-        # end turn
 
+        board = self.get_player_objects()['board']
+        busted = self.get_player_objects()['busted']
+        dice_points = self.update_dice_points() 
+        available_tiles = board.update_grill_status(dice_points)
+        while (len(available_tiles) < 1) and not busted:
+            rolls = self.__parent.roll_dice()
+            tksleep(1)
+            self.__choose_dice(rolls)
+            # check if tiles are available
+            dice_points = self.__parent.update_dice_points()
+            available_tiles = board.update_grill_status(dice_points)
+            busted = self.get_player_objects()['busted']
+            tksleep(1)
+
+        if busted: return # Prevent a CPU from ending its turn twice
+
+        # select a tile
+
+        # end turn
+        tksleep(1)
         self.txt_notif.set('')
+        print("ENDING CASUAL TURN in [ACTIVE PLAY]")
         self.__parent.end_turn()
+
+    def __choose_dice(self, raw_rolls):
+        rolls_kept = self.__parent.get_player_objects()['rolls kept']
+        lbls_dice_rolls = self.__parent.get_player_objects()['lbls roll']
+        self.__dice_options = []
+        rolls = []
+
+        for x in range(len(raw_rolls)):
+            if lbls_dice_rolls[x] is not None:
+                rolls.append(raw_rolls[x])
+        
+        for x in rolls:
+            if x not in self.__dice_options and x not in rolls_kept:
+                self.__dice_options.append(x)
+
+        if len(self.__dice_options) < 1:
+            self.__parent.turn_bust("No dice options.")
+            return
+
+        die = random.randint(1, 6)
+        while die not in self.__dice_options:
+            die = random.randint(1, 6)
+
+        if die == 6: die = 'W'
+        self.__parent.select_dice(die)
