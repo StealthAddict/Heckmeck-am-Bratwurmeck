@@ -3,18 +3,8 @@ from graphics import *
 from players import *
 
 """
-    TODO: Later, use one of the corner frames to display messages
-        like: 'Player 2's turn'.
-        Also, label the player boards
-
-    TODO: Player ends their turn by selecting a tile
-
-    TODO: Make subclass specifically for Main Player, which handles changing the buttons
-        and selections of dice, etc.
-        The main Player subclass can be for the NPCs, and Main Player class overrides some
-        functions
+    TODO: Label the player boards
 """
-
 
 def main():
     root = Tk()
@@ -26,7 +16,7 @@ def main():
     main_player = MainPlayer() # Human-controlled player
     players = [main_player, CasualPlayer(), Player(), Player()]
     frames = create_label_frames(root)
-    create_player_labels(frames, players, board)
+    create_game_labels(frames, players, board)
 
     board.assign_players(players)
     root.mainloop()
@@ -36,35 +26,35 @@ def main():
 class Board:
     def __init__(self):
         self.__grill = [] # all available tiles on the board in ascending order.
-        self.players = [] # list of Player objects playing the game
+        self.__players = [] # list of Player objects playing the game
         self.__next_player = 0  # index of next player
         self.__game_over = False
-        self.txt_notif = None    
-
-    # Place a tile back onto the board after a player loses it.
-    def replace_tile(self, player):
-        tile = player.pop_tile()
-        tile['status'] = 'grill'
-        # TODO: sort tile into correct list index
+        self.txt_notif = None
 
     def update_grill_status(self, dice_pts):
+        """Update the button states of the grill's and players' top tiles
+        according to the current roll points (dice_pts) of the player.
+        """
         for x in range(len(self.__grill)):
-            if self.__grill[x] is not None and self.__grill[x]['status'] == 'grill':
-                if self.__grill[x]['val'] <= dice_pts:
-                    self.__grill[x]['object']['state'] = ['normal']
-                elif self.__grill[x]['val'] > dice_pts:
-                    self.__grill[x]['object']['state'] = ['disabled']    
-            elif self.__grill[x] is not None and self.__grill[x]['val'] == dice_pts:
-                self.__grill[x]['object']['state'] = ['normal']
+            if self.__grill[x] is not None:
+                if self.__grill[x]['status'] == 'grill':
+                    if self.__grill[x]['val'] <= dice_pts:
+                        self.__grill[x]['object']['state'] = ['normal']
+                    elif self.__grill[x]['val'] > dice_pts:
+                        self.__grill[x]['object']['state'] = ['disabled']  
 
-    """
-    Reset the grill for a new game.
-    Replaces all 15 tiles in the grill.
-    self.__grill: 'val' - the value needed to acquire the tile
-                  'points' - the # of points awarded by the tile
-                  'status' - where the tile currently is/availability
-    """
+                elif self.__grill[x]['val'] == dice_pts and self.__grill[x]['status'] != 'OOP':
+                    player = self.__grill[x]['status']
+                    player._btn_top_tile['state'] = ['normal']
+
     def set_up_grill(self, grill_tiles):
+        """ Reset the grill for a new game.
+        Replaces all 16 tiles in the grill.
+        self.__grill: 'val' - the value needed to acquire the tile
+            'points' - the # of points awarded by the tile
+            'status' - where the tile currently is
+            'object' - the tkinter Button
+        """
         self.__grill = []
         point_val = 1
         for x in range(21, 37):
@@ -76,28 +66,63 @@ class Board:
             if x % 4 == 0:
                 point_val += 1
 
+    def pick_tile(self, player, tile_idx):
+        """To be used by tile buttons to move a tile (tile_idx)
+        from the grill to a player. Player is unable to choose
+        a tile if they have no worm dice, indicated by W.
+        """
+        if player.has_worms():
+            tile = self.__grill[tile_idx - 21]
+            player.update_top_tile(tile)
+            player.end_turn()
+
+            self.__grill[tile_idx - 21]['status'] = player
+            self.__grill[tile_idx - 21]['object']['state'] = ['disabled']
+        else:
+            self.txt_notif.set("You don't have any worms!")
+            invalid_dice, total_dice = player.get_ti_dice_cnt()
+            if total_dice == 0:
+                print("worm bust")
+                player.turn_bust()
+
+    def assign_players(self, player_list):
+        self.__players = player_list
+
+    def activate_next_player(self):
+        """Signals the next player to begin their turn if the game
+        has not ended.
+        """
+        if not self.__game_over:
+            self.__players[self.__next_player].activate_play()
+            self.__next_player = 0 if self.__next_player == 3 else + 1
+            self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
+
     def set_notification(self, new_string):
         self.txt_notif.set(new_string)        
 
-    def pick_tile(self, player, tile_idx):
-        tile = self.__grill[tile_idx - 21]
-        player.update_top_tile(tile)
-        player.end_turn()
+    def remove_tile_from_play(self):
+        """Disable the highest value tile on the grill
+        from play.
+        """
+        for x in range(len(self.__grill), 0):
+            if self.__grill[x]['status'] == 'grill':
+                self.__grill[x]['status'] = 'OOP'  # Out Of Play
+                self.__grill[x]['object']['state'] = 'disabled'
 
-        self.__grill[tile_idx - 21]['status'] = player
-        self.__grill[tile_idx - 21]['object']['state'] = ['disabled']
+                if self.__grill[x]['val'] == 21:
+                    self.game_over('No tiles left on the grill.')
 
-    def assign_players(self, player_list):
-        self.players = player_list
+                break
 
-    def activate_next_player(self):
-        if not self.__game_over:
-            self.players[self.__next_player].activate_play()
-            self.__next_player = 0 if self.__next_player == 3 else + 1
-            self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
-        else:
-            print('GAME OVER')
+    def game_over(self, end_condition):
+        """Ends the game. end_condition is a string 
+        that specifies why the game ended.
+        """
+        self.__game_over = True
+        self.txt_notif.set(f'GAME OVER\n{end_condition}')
 
+    def get_grill(self):
+        return self.__grill
 
 if __name__ == '__main__':
     main()

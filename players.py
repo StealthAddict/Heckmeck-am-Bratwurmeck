@@ -1,6 +1,7 @@
 import random
 import time
 from tkinter import *
+from main import Board
 
 class Player:
     def __init__(self):
@@ -11,7 +12,7 @@ class Player:
         self.__btns_dice_held = []
         self.__lbl_victory_pts = None
         self.__lbl_dice_pts = None
-        self.__btn_top_tile = None
+        self._btn_top_tile = None
         self.__btn_roll = None
 
     def set_player_objects(self, po_dictionary, board):
@@ -19,7 +20,7 @@ class Player:
         self.__btns_dice_held = po_dictionary['dice held']
         self.__lbl_victory_pts = po_dictionary['points']
         self.__lbl_dice_pts = po_dictionary['dice points']
-        self.__btn_top_tile = po_dictionary['tile']
+        self._btn_top_tile = po_dictionary['tile']
         self.__btn_roll = po_dictionary['button']
         self.__board = board
 
@@ -29,14 +30,16 @@ class Player:
         return {'btn_dice_roll': self.__btns_dice_roll,
                 'btn_roll': self.__btn_roll}
 
-    """
-    6's are worms worth 5 pts
-    """
     def roll_dice(self):
+        """For use by roll! button. Randomly rolls dice between 1-6 for 
+        the main player to select from. Dice that roll a 6 are indicated
+        by a 'W' for worm.
+        """
         num_dice = 8
         rolls = []
         for x in range(num_dice):
-            rolls.append(random.randint(1, 6))
+            # rolls.append(random.randint(1, 6))
+            rolls.append(1)
 
         # Change player GUI
         dice_buttons = self.__btns_dice_roll
@@ -75,31 +78,59 @@ class Player:
                 if x is not None:
                     x['state'] = ['disabled']
 
-        # Check for a bust
-        invalid_dice = 0
-        total_dice = 0
-        for x in self.__btns_dice_roll:
-            if x is not None:
-                total_dice += 1
-                if x['state'] == 'disabled':
-                    invalid_dice += 1
-        if invalid_dice == total_dice and total_dice != 0:
-            # should have a little notif in the player station instead to show 'busted'
-            self.__board.set_notification("Busted!")
-            self.end_turn()
-
-        # or if no tiles are 'normal' and total_dice == 0
+        # Check if the player can choose from the roll
+        invalid_dice, total_dice = self.get_ti_dice_cnt()
+        if invalid_dice == total_dice and total_dice != 0:  
+            print("roll bust")
+            self.turn_bust()
 
         return rolls
     
+    def turn_bust(self):
+        """A bust causes the top tile of the player's
+        tile stack to be returned to the grill. If no tiles
+        remain, the largest value grill tile is now out of play.
+        """
+        if len(self.__tiles) < 1:
+            self.__board.remove_tile_from_play()
+        else:
+            removed_tile = self.__tiles.pop(-1)
+            removed_tile['status'] = 'grill'
+            removed_tile['object']['state'] = ['disabled']
+            if len(self.__tiles) > 0:
+                self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+
+        print('bust!')
+        self.end_turn() 
+
     def update_top_tile(self, tile):
-        self.__btn_top_tile['text'] = tile['object']['text']
+        """ Updates the player's tile button to be the tile parameter.
+        Adds the tile onto the player's collection of tiles.
+        """
+        self._btn_top_tile['text'] = tile['object']['text']
         if tile not in self.__tiles:
             self.__tiles.append(tile)
         else:
             self.__tiles.remove(tile)
 
+    def get_ti_dice_cnt(self):
+        """ Returns the total dice left in the roll and the 
+        invalid dice in the roll. Invalid dice are dice the 
+        player cannot select.
+        """
+        invalid_dice = 0
+        total_dice = 0
+        for x in self.__btns_dice_roll:  # Check dice
+            if x is not None:
+                total_dice += 1
+                if x['state'] == 'disabled':
+                    invalid_dice += 1
+        return invalid_dice, total_dice
+
     def select_dice(self, number):
+        """ Moves all dice of one number from the dice rolled row to the
+        dice kept row.
+        """
         for x in range(len(self.__btns_dice_roll)):            
             die = self.__btns_dice_roll[x]
             
@@ -116,9 +147,31 @@ class Player:
         if self.__btn_roll is not None:  # Enable Roll! button
             self.__btn_roll['state'] = ['normal']
 
-        self.__update_dice_points()
+        d_pts = self.__update_dice_points()
+
+        # Check if any tiles are selectable after there are no
+        # more dice to roll.
+        invalid_dice, total_dice = self.get_ti_dice_cnt()
+        if total_dice == 0:
+            available_tile = False
+            grill = self.__board.get_grill()
+            for x in grill:
+                if x['val'] > d_pts:
+                    print("no tiles bust")
+                    self.turn_bust()
+                    break
+                elif x['object']['state'] == 'normal':
+                    available_tile = True
+                    break
+            
+            if not available_tile:
+                print("no tiles bust")
+                self.turn_bust()
 
     def deselect_dice(self, number):
+        """ Moves all dice of one number from the dice kept row to the
+        dice rolled row.
+        """
         for x in range(len(self.__btns_dice_held)):
             die = self.__btns_dice_held[x]
 
@@ -141,15 +194,18 @@ class Player:
         self.__update_dice_points()  
 
     def __update_dice_points(self):
-        # Update dice points  
+        """ Update dice points label and
+        update grill status based on dice points.
+            Returns dice point amount.
+        """
         d_pts = 0
         for x in self.__rolls_kept:
             d_pts += 5 if x == 'W' else + x
             
         self.__lbl_dice_pts['text'] = f'({d_pts})'
-
-        # Update grill
         self.__board.update_grill_status(d_pts)
+
+        return d_pts
 
     def __update_victory_points(self):
         points = 0
@@ -175,6 +231,13 @@ class Player:
         self.__update_dice_points()
         self.__update_victory_points()
         self.__board.activate_next_player()
+
+    def has_worms(self):
+        for x in self.__btns_dice_held:
+            if x is not None and x['text'] == 'W':
+                return True
+            
+        return False
 
     def activate_play(self):
        
@@ -203,9 +266,18 @@ class MainPlayer(Player):
 class CasualPlayer(Player):
 
     def __init__(self):
-        super(CasualPlayer, self).__init__()
+        parent = super(CasualPlayer, self)
+        parent.__init__()
+        self.__parent = parent
     
     def activate_play(self):
         # Perform casual player's actions
+
+        # roll dice
+        # choose dice
+        # check if tiles are available
+        # repeat until desired points reached
+        # select a tile
+        # end turn
 
         print("casual player's turn")

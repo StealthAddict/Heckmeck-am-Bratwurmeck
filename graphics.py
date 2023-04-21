@@ -1,12 +1,10 @@
 from tkinter import *
 from tkinter import ttk
-# from main import Board, Player
 
-"""
-I want a 3x3 grid of labels in which I can place my grill,
-and player stations.
-"""
+
 def create_label_frames(root):
+    """Creates a 3x3 grid of frames.
+    """
     main_frame = ttk.Frame(root, padding='1 1 1 1')
     main_frame.grid(row=1, column=1)
     frames = []
@@ -21,8 +19,11 @@ def create_label_frames(root):
     return frames
 
 
-def create_player_labels(frames, players, board):
-     # set up player stations
+def create_game_labels(frames, players, board):
+    """Sets up the edges of the window to be
+    player spaces and assigns them to Player instances. 
+        Additionally sets up the center of the board as the grill.
+    """
 
     p1 = generate_player_mat(2, 1, frames, players[0])
     players[0].set_player_objects(p1, board)
@@ -32,11 +33,17 @@ def create_player_labels(frames, players, board):
     players[2].set_player_objects(p3, board)
     p4 = generate_player_mat(1, 2, frames, False)  # right
     players[3].set_player_objects(p4, board)
+
     board.set_up_grill(generate_grill(1, 1, frames, players[0], board))
     generate_notification_square(2, 0, frames, board)
 
 
 def generate_player_mat(row, col, frames, main_player):
+    """Populates a player's space with the labels and buttons
+    to interact with the game.
+        Returns player_objects, which stores the modifiable objects
+    on the player mat.
+    """
     player_frame = frames[row][col]
 
     # Text labels
@@ -75,6 +82,10 @@ def generate_player_mat(row, col, frames, main_player):
 
 
 def generate_grill(row, col, frames, main_player, board):
+    """Sets up the grill portion of the game with appropriate
+    labels and buttons.
+        Returns grill_tiles, containing all the buttons on the grill.
+    """
     grill_frame = frames[row][col]
     grill_tiles = []
 
@@ -115,6 +126,9 @@ def generate_grill(row, col, frames, main_player, board):
 
 
 def generate_notification_square(row, col, frames, board):
+    """Modifies a space to display general notifications to the players.
+    Modifies board to have control over the text via a StringVar.
+    """
     lbl_notif = Label(frames[row][col])
     lbl_notif.grid(row=0, column=0)
     board.txt_notif = StringVar(lbl_notif, 'It\'s your turn!')
