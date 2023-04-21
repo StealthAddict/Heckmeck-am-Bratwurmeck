@@ -1,9 +1,10 @@
 import random
 import time
 from tkinter import *
-from main import Board
+# from main import Board
 
-class Player:
+class MainPlayer():
+
     def __init__(self):
         self.__board = None
         self.__tiles = []  # stores numbered tiles gathered. most recent at top
@@ -24,12 +25,7 @@ class Player:
         self._btn_top_tile = po_dictionary['tile']
         self.__btn_roll = po_dictionary['button']
         self.__board = board
-
-    def _get_player_objects(self):
-        # For use of child player classes to access needed variables.
-        return {'btn_dice_roll': self.__btns_dice_roll,
-                'btn_roll': self.__btn_roll}
-
+    
     def roll_dice(self):
         """For use by roll! button. Randomly rolls dice between 1-6 for 
         the main player to select from. Dice that roll a 6 are indicated
@@ -237,32 +233,36 @@ class Player:
                 return True
             
         return False
-
-    def activate_play(self):
-       
-        """ run AI or for main, activate dice buttons
-            Could create a subclass for every player/AI type
-            and this one just immediately ends turn as its the player
-            thats not assigned to play
-        """
-        self.txt_notif.set('')
-        print("this player's turn!")
-
-
-class MainPlayer(Player):
-
-    def __init__(self):
-        parent = super(MainPlayer, self)
-        parent.__init__()
-        self.__parent = parent
     
     def activate_play(self):
         # Normalize roll! button
-        po_dict = self.__parent._get_player_objects()
-        po_dict['btn_roll']['state'] = ['normal']
+        self.__btn_roll['state'] = ['normal']
 
         self.txt_notif.set('')
         print("main player's turn")
+
+
+class Player():
+    def __init__(self):
+        self.__board = None
+        self.__tiles = []  # stores numbered tiles gathered. most recent at top
+        self.__rolls_kept = []  # stores numbers selected from rolls
+        self.__lbls_dice_roll = []
+        self.__lbls_dice_held = []
+        self.__lbl_victory_pts = None
+        self.__lbl_dice_pts = None
+        self._btn_top_tile = None
+        self.__btn_roll = None
+        self.txt_notif = StringVar()
+
+    def set_player_objects(self, po_dictionary, board):
+        self.__lbls_dice_roll = po_dictionary['dice roll']
+        self.__lbls_dice_held = po_dictionary['dice held']
+        self.__lbl_victory_pts = po_dictionary['points']
+        self.__lbl_dice_pts = po_dictionary['dice points']
+        self._btn_top_tile = po_dictionary['tile']
+        self.__board = board
+
 
 class CasualPlayer(Player):
 
@@ -270,6 +270,7 @@ class CasualPlayer(Player):
         parent = super(CasualPlayer, self)
         parent.__init__()
         self.__parent = parent
+
     
     def activate_play(self):
         # Perform casual player's actions

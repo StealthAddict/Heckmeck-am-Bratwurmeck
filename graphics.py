@@ -25,21 +25,21 @@ def create_game_labels(frames, players, board):
         Additionally sets up the center of the board as the grill.
     """
 
-    p1 = generate_player_mat(2, 1, frames, players[0], 1)
+    p1 = generate_main_player_mat(2, 1, frames, players[0], 1)
     players[0].set_player_objects(p1, board)
-    p2 = generate_player_mat(1, 0, frames, players[1], 2)  # left
+    p2 = generate_CPU_player_mat(1, 0, frames, players[1], 2)  # left
     players[1].set_player_objects(p2, board)
-    p3 = generate_player_mat(0, 1, frames, players[2], 3)  # top
+    p3 = generate_CPU_player_mat(0, 1, frames, players[2], 3)  # top
     players[2].set_player_objects(p3, board)
-    p4 = generate_player_mat(1, 2, frames, players[3], 4)  # right
+    p4 = generate_CPU_player_mat(1, 2, frames, players[3], 4)  # right
     players[3].set_player_objects(p4, board)
 
     board.set_up_grill(generate_grill(1, 1, frames, players[0], board))
     generate_notification_square(2, 0, frames, board)
 
 
-def generate_player_mat(row, col, frames, player, player_num):
-    """Populates a player's space with the labels and buttons
+def generate_main_player_mat(row, col, frames, player, player_num):
+    """Populates the main player's space with the labels and buttons
     to interact with the game.
         Returns player_objects, which stores the modifiable objects
     on the player mat.
@@ -69,17 +69,54 @@ def generate_player_mat(row, col, frames, player, player_num):
         die.grid(row=3, column=x+1)        
         dice_roll.append(die)
     
+    roll_dice = Button(player_frame, text='Roll!', 
+                        command=lambda: player.roll_dice(), 
+                        state=['normal'])
+    roll_dice.grid(row=6, column=0)
+    
     player_objects = {'points': points, 'tile': tile, 'dice roll': dice_roll,
                       'dice held': [None, None, None, None, None, None,
-                                    None, None], 
-                      'button': None, 'dice points': dice_points} 
+                                    None, None], 'dice points': dice_points,
+                        'button': roll_dice} 
 
-    if isinstance(player, MainPlayer): 
-        roll_dice = Button(player_frame, text='Roll!', 
-                           command=lambda: player.roll_dice(), 
-                           state=['normal'])
-        roll_dice.grid(row=6, column=0)
-        player_objects['button'] = roll_dice
+    return player_objects
+
+
+def generate_CPU_player_mat(row, col, frames, player, player_num):
+    """Populates a CPU player's space with the labels and buttons
+    to interact with the game.
+        Returns player_objects, which stores the modifiable objects
+    on the player mat.
+    """
+    player_frame = frames[row][col]
+
+    # Text labels
+    Label(player_frame, text=f'Player {player_num}').grid(row=0, column=0)
+    Label(player_frame, text='Points:').grid(row=1, column=0)
+    Label(player_frame, text='Top Tile:').grid(row=2, column=0)
+    Label(player_frame, text='Dice\nRolled:').grid(row=3, column=0)
+    Label(player_frame, text='Dice Held:').grid(row=4, column=0)
+    notif = Label(player_frame, textvariable=player.txt_notif)
+    notif.grid(row=6, column=2, rowspan=2, columnspan=8)
+
+    # Counters/dice
+    points = Label(player_frame, text='0')
+    points.grid(row=1, column=1)
+    tile = Button(player_frame, text='None', state=['disabled'])  # Only ever shows top most tile
+    tile.grid(row=2, column=1, columnspan=3)
+    dice_points = Label(player_frame, text='(0)')
+    dice_points.grid(row=5, column=0)
+
+    dice_roll = []
+    for x in range(8): 
+        die = Label(player_frame, text='/', relief='solid', borderwidth=2,
+                     height='1', width='3')
+        die.grid(row=3, column=x+1, sticky='EW', padx=2)        
+        dice_roll.append(die)
+    
+    player_objects = {'points': points, 'tile': tile, 'dice roll': dice_roll,
+                      'dice held': [None, None, None, None, None, None,
+                                    None, None], 'dice points': dice_points} 
 
     return player_objects
 
