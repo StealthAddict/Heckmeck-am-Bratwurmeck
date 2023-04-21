@@ -1,7 +1,6 @@
 import random
 import time
 from tkinter import *
-# from main import Board
 
 class MainPlayer():
 
@@ -210,6 +209,7 @@ class MainPlayer():
         self.__lbl_victory_pts['text'] = points
 
     def end_turn(self):
+        print("MAIN PLAYER CALLS ACTIVATE")
         # Reset dice
         self.__btn_roll['state'] = ['disabled']
         for x in range(len(self.__btns_dice_held)):
@@ -263,6 +263,54 @@ class Player():
         self._btn_top_tile = po_dictionary['tile']
         self.__board = board
 
+    def roll_dice(self):
+        """Randomly rolls dice between 1-6 for the player to select from.
+        Dice that roll a 6 are indicated by a 'W' for worm.
+        """
+        num_dice = 8
+        rolls = []
+        for x in range(num_dice):
+            rolls.append(random.randint(1, 6))
+
+        # Change player GUI
+        dice_buttons = self.__lbls_dice_roll
+        for x in range(len(dice_buttons)):
+            die = dice_buttons[x]
+            roll_number = rolls[x]
+            if (rolls[x] == 6):
+                roll_number = 'W'
+            if die != None:
+                die['text'] = roll_number
+
+        if self.__btn_roll is not None:
+            self.__btn_roll['state'] = ['disabled']
+
+        # TODO: Check if the player can choose from the roll
+        # invalid_dice, total_dice = self.__get_ti_dice_cnt()
+        # if invalid_dice == total_dice and total_dice != 0:  
+        #     self.__turn_bust("No selectable dice.")
+
+        return rolls
+    
+    def end_turn(self):
+        # Reset dice
+        for x in range(len(self.__lbls_dice_held)):
+            if self.__lbls_dice_held[x] != None:
+                self.__lbls_dice_roll[x] = self.__lbls_dice_held[x]
+                self.__lbls_dice_roll[x].grid(row=3)
+                self.__lbls_dice_held[x] = None
+
+        for x in range(len(self.__lbls_dice_roll)):
+            self.__lbls_dice_roll[x]['text'] = '/'
+
+        # self.__rolls_kept = []
+        # self.__update_dice_points()
+        # self.__update_victory_points()
+        self.__board.activate_next_player()
+    
+    def activate_play(self):
+        print('none player\'s turn')
+        self.end_turn()
 
 class CasualPlayer(Player):
 
@@ -274,8 +322,9 @@ class CasualPlayer(Player):
     
     def activate_play(self):
         # Perform casual player's actions
-
+        print("casual player's turn")
         # roll dice
+        self.__parent.roll_dice()
         # choose dice
         # check if tiles are available
         # repeat until desired points reached
@@ -283,4 +332,4 @@ class CasualPlayer(Player):
         # end turn
 
         self.txt_notif.set('')
-        print("casual player's turn")
+        self.__parent.end_turn()

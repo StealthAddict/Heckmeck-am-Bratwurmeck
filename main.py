@@ -16,7 +16,7 @@ class Board:
     def __init__(self):
         self.__grill = [] # all available tiles on the board in ascending order.
         self.__players = [] # list of Player objects playing the game
-        self.__next_player = 1  # index of next player
+        self.__next_player = 0  # index of next player
         self.__game_over = False
         self.txt_notif = StringVar()
 
@@ -78,8 +78,12 @@ class Board:
         has not ended.
         """
         if not self.__game_over:
+            if self.__next_player == 3:
+                self.__next_player = 0 
+            else:
+                self.__next_player += 1
+                
             self.__players[self.__next_player].activate_play()
-            self.__next_player = 0 if self.__next_player == 3 else + 1
             self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
 
     def set_notification(self, new_string):
