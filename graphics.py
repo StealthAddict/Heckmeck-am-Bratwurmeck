@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from players import MainPlayer
 
 
 def create_label_frames(root):
@@ -27,18 +28,18 @@ def create_game_labels(frames, players, board):
 
     p1 = generate_player_mat(2, 1, frames, players[0])
     players[0].set_player_objects(p1, board)
-    p2 = generate_player_mat(1, 0, frames, False)  # left
+    p2 = generate_player_mat(1, 0, frames, players[1])  # left
     players[1].set_player_objects(p2, board)
-    p3 = generate_player_mat(0, 1, frames, False)  # top
+    p3 = generate_player_mat(0, 1, frames, players[2])  # top
     players[2].set_player_objects(p3, board)
-    p4 = generate_player_mat(1, 2, frames, False)  # right
+    p4 = generate_player_mat(1, 2, frames, players[3])  # right
     players[3].set_player_objects(p4, board)
 
     board.set_up_grill(generate_grill(1, 1, frames, players[0], board))
     generate_notification_square(2, 0, frames, board)
 
 
-def generate_player_mat(row, col, frames, main_player):
+def generate_player_mat(row, col, frames, player):
     """Populates a player's space with the labels and buttons
     to interact with the game.
         Returns player_objects, which stores the modifiable objects
@@ -51,6 +52,8 @@ def generate_player_mat(row, col, frames, main_player):
     Label(player_frame, text='Top Tile:').grid(row=1, column=0)
     Label(player_frame, text='Dice\nRolled:').grid(row=2, column=0)
     Label(player_frame, text='Dice Held:').grid(row=3, column=0)
+    notif = Label(player_frame, textvariable=player.txt_notif)
+    notif.grid(row=5, column=2, rowspan=2, columnspan=8)
 
     # Counters/dice
     points = Label(player_frame, text='0')
@@ -71,9 +74,9 @@ def generate_player_mat(row, col, frames, main_player):
                                     None, None], 
                       'button': None, 'dice points': dice_points} 
 
-    if main_player: 
+    if isinstance(player, MainPlayer): 
         roll_dice = Button(player_frame, text='Roll!', 
-                           command=lambda: main_player.roll_dice(), 
+                           command=lambda: player.roll_dice(), 
                            state=['normal'])
         roll_dice.grid(row=5, column=0)
         player_objects['button'] = roll_dice
@@ -131,5 +134,5 @@ def generate_notification_square(row, col, frames, board):
     """
     lbl_notif = Label(frames[row][col])
     lbl_notif.grid(row=0, column=0)
-    board.txt_notif = StringVar(lbl_notif, 'It\'s your turn!')
+    board.txt_notif.set('It\'s your turn!')
     lbl_notif['textvariable'] =  board.txt_notif

@@ -14,6 +14,7 @@ class Player:
         self.__lbl_dice_pts = None
         self._btn_top_tile = None
         self.__btn_roll = None
+        self.txt_notif = StringVar()
 
     def set_player_objects(self, po_dictionary, board):
         self.__btns_dice_roll = po_dictionary['dice roll']
@@ -25,8 +26,7 @@ class Player:
         self.__board = board
 
     def _get_player_objects(self):
-        """ For use of child player classes to access needed variables.
-        """
+        # For use of child player classes to access needed variables.
         return {'btn_dice_roll': self.__btns_dice_roll,
                 'btn_roll': self.__btn_roll}
 
@@ -38,8 +38,7 @@ class Player:
         num_dice = 8
         rolls = []
         for x in range(num_dice):
-            # rolls.append(random.randint(1, 6))
-            rolls.append(1)
+            rolls.append(random.randint(1, 6))
 
         # Change player GUI
         dice_buttons = self.__btns_dice_roll
@@ -100,7 +99,7 @@ class Player:
             if len(self.__tiles) > 0:
                 self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
 
-        print('bust!')
+        self.txt_notif.set('Busted!')
         self.end_turn() 
 
     def update_top_tile(self, tile):
@@ -246,6 +245,7 @@ class Player:
             and this one just immediately ends turn as its the player
             thats not assigned to play
         """
+        self.txt_notif.set('')
         print("this player's turn!")
 
 
@@ -261,6 +261,7 @@ class MainPlayer(Player):
         po_dict = self.__parent._get_player_objects()
         po_dict['btn_roll']['state'] = ['normal']
 
+        self.txt_notif.set('')
         print("main player's turn")
 
 class CasualPlayer(Player):
@@ -279,5 +280,6 @@ class CasualPlayer(Player):
         # repeat until desired points reached
         # select a tile
         # end turn
-
+        
+        self.txt_notif.set('')
         print("casual player's turn")

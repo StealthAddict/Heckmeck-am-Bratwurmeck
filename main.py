@@ -2,10 +2,6 @@ from tkinter import *
 from graphics import *
 from players import *
 
-"""
-    TODO: Label the player boards
-"""
-
 def main():
     root = Tk()
    
@@ -17,8 +13,8 @@ def main():
     players = [main_player, CasualPlayer(), Player(), Player()]
     frames = create_label_frames(root)
     create_game_labels(frames, players, board)
-
     board.assign_players(players)
+
     root.mainloop()
     pass
 
@@ -29,7 +25,7 @@ class Board:
         self.__players = [] # list of Player objects playing the game
         self.__next_player = 0  # index of next player
         self.__game_over = False
-        self.txt_notif = None
+        self.txt_notif = StringVar()
 
     def update_grill_status(self, dice_pts):
         """Update the button states of the grill's and players' top tiles
