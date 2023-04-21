@@ -1,22 +1,15 @@
 from tkinter import *
+import tkinter as tk
 from graphics import *
 from players import *
 
 def main():
-    root = Tk()
-   
-    root.title('Heckmeck am Bratwurmeck')
-    root.resizable(False, False)
-    root.config(bg='White')
-    board = Board()
-    main_player = MainPlayer() # Human-controlled player
-    players = [main_player, CasualPlayer(), Player(), Player()]
-    frames = create_label_frames(root)
-    create_game_labels(frames, players, board)
-    board.assign_players(players)
+    player_selection = Tk()
+    player_selection.title('Heckmeck am Bratwurmeck')
+    player_selection.resizable(False, False)
+    create_player_selection(player_selection)
 
-    root.mainloop()
-    pass
+    player_selection.mainloop()
 
 
 class Board:
@@ -119,6 +112,55 @@ class Board:
 
     def get_grill(self):
         return self.__grill
+
+
+def create_player_selection(root):
+    # Creates the initial window asking for player count.
+    
+    frame = Frame(root)
+    frame.grid(row=0, column=0)
+
+    title = Label(frame, text='Choose number of players to start.')
+    title.grid(row=1, column=1, columnspan=5, padx=5, pady=5)
+
+    option_selected = StringVar()
+    
+    radio_p2 = Radiobutton(frame, width=15, value=2, text='2 Players', 
+                           variable=option_selected)
+    radio_p2.grid(row=2, column=1)
+    radio_p2.focus_set()
+    radio_p3 = Radiobutton(frame, width=15, value=3, text='3 Players', 
+                           variable=option_selected)
+    radio_p3.grid(row=3, column=1)
+    radio_p4 = Radiobutton(frame, width=15, value=4, text='4 Players', 
+                           variable=option_selected)
+    radio_p4.grid(row=4, column=1)
+
+    Button(frame, text='finished', command=lambda : open_main_window(root, option_selected)).grid(row=5, column=2)
+
+
+def open_main_window(prev_win, num_players):
+    prev_win.destroy()
+    root = Tk()
+    root.title('Heckmeck am Bratwurmeck')
+    root.resizable(False, False)
+    
+    board = Board()
+    main_player = MainPlayer() # Human-controlled player
+
+    if num_players.get() == '':
+        num_players = 2
+    else:
+        num_players = int(num_players.get())
+
+    players = [main_player, CasualPlayer(), Player(), Player()]
+    for x in range(1, num_players):
+        players[x] = CasualPlayer()
+    board.assign_players(players)
+
+    frames = create_label_frames(root)
+    create_game_labels(frames, players, board)
+
 
 if __name__ == '__main__':
     main()
