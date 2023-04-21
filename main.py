@@ -16,7 +16,7 @@ class Board:
     def __init__(self):
         self.__grill = [] # all available tiles on the board in ascending order.
         self.__players = [] # list of Player objects playing the game
-        self.__next_player = 0  # index of next player
+        self.__next_player = 1  # index of next player
         self.__game_over = False
         self.txt_notif = StringVar()
 
@@ -68,11 +68,7 @@ class Board:
             self.__grill[tile_idx - 21]['status'] = player
             self.__grill[tile_idx - 21]['object']['state'] = ['disabled']
         else:
-            self.txt_notif.set("You don't have any worms!")
-            invalid_dice, total_dice = player.get_ti_dice_cnt()
-            if total_dice == 0:
-                print("worm bust")
-                player.turn_bust()
+            player.txt_notif.set("You don't have any worms!")
 
     def assign_players(self, player_list):
         self.__players = player_list
@@ -140,6 +136,7 @@ def create_player_selection(root):
 
 
 def open_main_window(prev_win, num_players):
+    # Generates the main game window
     prev_win.destroy()
     root = Tk()
     root.title('Heckmeck am Bratwurmeck')

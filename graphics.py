@@ -4,8 +4,7 @@ from players import MainPlayer
 
 
 def create_label_frames(root):
-    """Creates a 3x3 grid of frames.
-    """
+    # Creates a 3x3 grid of frames.
     main_frame = ttk.Frame(root, padding='1 1 1 1')
     main_frame.grid(row=1, column=1)
     frames = []

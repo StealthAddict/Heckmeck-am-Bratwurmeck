@@ -78,14 +78,13 @@ class Player:
                     x['state'] = ['disabled']
 
         # Check if the player can choose from the roll
-        invalid_dice, total_dice = self.get_ti_dice_cnt()
+        invalid_dice, total_dice = self.__get_ti_dice_cnt()
         if invalid_dice == total_dice and total_dice != 0:  
-            print("roll bust")
-            self.turn_bust()
+            self.__turn_bust("No selectable dice.")
 
         return rolls
     
-    def turn_bust(self):
+    def __turn_bust(self, bust_str):
         """A bust causes the top tile of the player's
         tile stack to be returned to the grill. If no tiles
         remain, the largest value grill tile is now out of play.
@@ -99,7 +98,7 @@ class Player:
             if len(self.__tiles) > 0:
                 self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
 
-        self.txt_notif.set('Busted!')
+        self.txt_notif.set(f'Busted!\n{bust_str}')
         self.end_turn() 
 
     def update_top_tile(self, tile):
@@ -112,7 +111,7 @@ class Player:
         else:
             self.__tiles.remove(tile)
 
-    def get_ti_dice_cnt(self):
+    def __get_ti_dice_cnt(self):
         """ Returns the total dice left in the roll and the 
         invalid dice in the roll. Invalid dice are dice the 
         player cannot select.
@@ -136,7 +135,7 @@ class Player:
             if die != None and number == die['text']:  
                 # Move dice to dice held
                 self.__rolls_kept.append(number)
-                die.grid(row=3)
+                die.grid(row=4)
                 die['command'] = lambda: self.deselect_dice(number)
                 self.__btns_dice_held[x] = self.__btns_dice_roll[x]
                 self.__btns_dice_roll[x] = None    
@@ -150,22 +149,23 @@ class Player:
 
         # Check if any tiles are selectable after there are no
         # more dice to roll.
-        invalid_dice, total_dice = self.get_ti_dice_cnt()
+        invalid_dice, total_dice = self.__get_ti_dice_cnt()
         if total_dice == 0:
             available_tile = False
             grill = self.__board.get_grill()
             for x in grill:
                 if x['val'] > d_pts:
-                    print("no tiles bust")
-                    self.turn_bust()
+                    self.__turn_bust("Can't purchase any tiles.")
                     break
                 elif x['object']['state'] == 'normal':
                     available_tile = True
                     break
             
             if not available_tile:
-                print("no tiles bust")
-                self.turn_bust()
+                self.__turn_bust("Can't purchase any tiles.")
+
+            elif not self.has_worms():
+                self.__turn_bust("You have no worms.")
 
     def deselect_dice(self, number):
         """ Moves all dice of one number from the dice kept row to the
@@ -177,7 +177,7 @@ class Player:
             if die != None and number == die['text']:
                 # Move dice to dice rolled
                 self.__rolls_kept.remove(number)
-                die.grid(row=2)
+                die.grid(row=3)
                 die['command'] = lambda: self.select_dice(number)
                 self.__btns_dice_roll[x] = die
                 self.__btns_dice_held[x] = None
@@ -219,7 +219,7 @@ class Player:
         for x in range(len(self.__btns_dice_held)):
             if self.__btns_dice_held[x] != None:
                 self.__btns_dice_roll[x] = self.__btns_dice_held[x]
-                self.__btns_dice_roll[x].grid(row=2)
+                self.__btns_dice_roll[x].grid(row=3)
                 self.__btns_dice_held[x] = None
 
         for x in range(len(self.__btns_dice_roll)):
@@ -280,6 +280,6 @@ class CasualPlayer(Player):
         # repeat until desired points reached
         # select a tile
         # end turn
-        
+
         self.txt_notif.set('')
         print("casual player's turn")
