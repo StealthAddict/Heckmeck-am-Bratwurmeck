@@ -1,35 +1,35 @@
 Heckmeck am Bratwurmeck
 -----------------------
 
-  This dice gambling game challenges its players to collect 
+  This dice gambling game challenges its players to collect
 as many worm tiles from the grill as they can!
 
-  The grill is the center piece of the board and will 
-highlight which tiles you are able to purchase on your turn. 
-Each tile shows how many points you need to have rolled to 
-take it and how many victory points 
-it's worth, denoted by 'Worm(s)'.
+  The grill is the centerpiece of the board and will
+highlight which tiles you are able to purchase on your turn.
+Each tile shows how many points you need to have rolled to
+take it and how many victory points
+its worth, denoted by 'Worm(s)'.
 
 Rolling phase:
-  The current player rolls eight dice then selects all dice 
-of a number/symbol that they have not collected yet. They 
-may continue rolling until there are no dice left or they 
-bust. 
-  A bust occurs when the player cannot choose any dice 
-from the rolled pool OR they have not collected a worm symbol 
-once they finish the rolling phase OR they do not have enough 
-points to participate in the buying phase. 
-  - Upon a bust, the player must return their top most worm 
-    tile to the grill and remove the highest value tile on the 
+  The current player rolls eight dice then selects all dice
+of a number/symbol that they have not collected yet. They
+may continue rolling until there are no dice left, or they
+bust.
+  A bust occurs when the player cannot choose any dice
+from the rolled pool OR they have not collected a worm symbol
+once they finish the rolling phase OR they do not have enough
+points to participate in the buying phase.
+  - Upon a bust, the player must return their top most worm
+    tile to the grill and remove the highest value tile on the
     grill from the game.
 
 Buying phase:
-  The player may buy any worm tile from the grill that is less 
-than or equal to the points they acquired in the rolling phase 
-OR if their points are equal to the topmost tile of another 
-player, they may steal it instead. The player stacks their new 
+  The player may buy any worm tile from the grill that is less
+than or equal to the points they acquired in the rolling phase
+OR if their points are equal to the topmost tile of another
+player, they may steal it instead. The player stacks their new
 worm tile on top of previously acquired tiles.
-  - Players must have at least one worm symbol (W) in order 
+  - Players must have at least one worm symbol (W) in order
     to purchase a tile.
 
 Ending:

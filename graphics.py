@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter import ttk
-from players import MainPlayer
 
 
 def create_label_frames(root):
@@ -15,13 +14,13 @@ def create_label_frames(root):
             frame.grid(row=row, column=col, sticky='nsew')
             frame_row.append(frame)
         frames.append(frame_row)
-    
+
     return frames
 
 
 def create_game_labels(frames, players, board):
     """Sets up the edges of the window to be
-    player spaces and assigns them to Player instances. 
+    player spaces and assigns them to Player instances.
         Additionally sets up the center of the board as the grill.
     """
 
@@ -58,26 +57,28 @@ def generate_main_player_mat(row, col, frames, player, player_num):
     # Counters/dice
     points = Label(player_frame, text='0')
     points.grid(row=1, column=1)
-    tile = Button(player_frame, text='None', state=['disabled'])  # Only ever shows top most tile
-    tile.grid(row=2, column=1, columnspan=3)
+    top_tile = Button(player_frame, text='None', state='disabled')
+    top_tile.grid(row=2, column=1, columnspan=3)
     dice_points = Label(player_frame, text='(0)')
     dice_points.grid(row=5, column=0)
     dice_roll = []
-    for x in range(8): 
-        die = Button(player_frame, text='/', state=['disabled'],
+    for x in range(8):
+        die = Button(player_frame, text='/', state='disabled',
                      height='1', width='1')
-        die.grid(row=3, column=x+1)        
+        die.grid(row=3, column=x + 1)
         dice_roll.append(die)
-    
-    roll_dice = Button(player_frame, text='Roll!', 
-                        command=lambda: player.roll_dice(), 
-                        state=['normal'])
+
+    roll_dice = Button(player_frame, text='Roll!',
+                       command=lambda: player.roll_dice(),
+                       state='normal')
     roll_dice.grid(row=6, column=0)
-    
-    player_objects = {'points': points, 'tile': tile, 'dice roll': dice_roll,
+
+    player_objects = {'points': points, 'tile': top_tile,
+                      'dice roll': dice_roll,
                       'dice held': [None, None, None, None, None, None,
-                                    None, None], 'dice points': dice_points,
-                        'button': roll_dice} 
+                                    None, None],
+                      'dice points': dice_points,
+                      'button': roll_dice}
 
     return player_objects
 
@@ -102,21 +103,23 @@ def generate_CPU_player_mat(row, col, frames, player, player_num):
     # Counters/dice
     points = Label(player_frame, text='0')
     points.grid(row=1, column=1)
-    tile = Button(player_frame, text='None', state=['disabled'])  # Only ever shows top most tile
-    tile.grid(row=2, column=1, columnspan=3)
+    top_tile = Button(player_frame, text='None', state='disabled')
+    top_tile.grid(row=2, column=1, columnspan=3)
     dice_points = Label(player_frame, text='(0)')
     dice_points.grid(row=5, column=0)
 
     dice_roll = []
-    for x in range(8): 
+    for x in range(8):
         die = Label(player_frame, text='/', relief='solid', borderwidth=2,
-                     height='1', width='3')
-        die.grid(row=3, column=x+1, sticky='EW', padx=2)        
+                    height='1', width='3')
+        die.grid(row=3, column=x + 1, sticky='EW', padx=2)
         dice_roll.append(die)
-    
-    player_objects = {'points': points, 'tile': tile, 'dice roll': dice_roll,
+
+    player_objects = {'points': points, 'tile': top_tile,
+                      'dice roll': dice_roll,
                       'dice held': [None, None, None, None, None, None,
-                                    None, None], 'dice points': dice_points} 
+                                    None, None],
+                      'dice points': dice_points}
 
     return player_objects
 
@@ -130,19 +133,20 @@ def generate_grill(row, col, frames, main_player, board):
     grill_tiles = []
 
     title_label = Label(grill_frame, text='GRILL')
-    title_label.grid(row=0, columnspan=(4))
+    title_label.grid(row=0, columnspan=4)
 
     point_val = 1
     col = 0
     for x in range(21, 37):
-            bratwurm_tile = Button(grill_frame, state=['disabled'], 
-                           text=f'{x}\n{point_val} Worm(s)')
-            bratwurm_tile.grid(row=point_val, column=col)
-            grill_tiles.append(bratwurm_tile)
+        bratwurm_tile = Button(grill_frame, state='disabled',
+                               text=f'{x}\n{point_val} Worm(s)')
+        bratwurm_tile.grid(row=point_val, column=col)
+        grill_tiles.append(bratwurm_tile)
 
-            if x % 4 == 0: point_val += 1
+        if x % 4 == 0:
+            point_val += 1
 
-            col = 0 if col == 3 else col + 1
+        col = 0 if col == 3 else col + 1
 
     # Due to Python's referencing system, this must be explicitly written
     grill_tiles[0]['command'] = lambda: board.pick_tile(main_player, 21)
@@ -173,17 +177,17 @@ def generate_notification_square(row, col, frames, board):
     this_frame.rowconfigure(1, weight=1)
     this_frame.columnconfigure(0, weight=1)
     this_frame.columnconfigure(2, weight=1)
-    
+
     lbl_notif = Label(this_frame)
     lbl_notif.grid(row=0, column=1, sticky='new')
     board.txt_notif.set('It\'s your turn!')
-    lbl_notif['textvariable'] =  board.txt_notif
+    lbl_notif['textvariable'] = board.txt_notif
 
 
 def generate_instructions(frames, root, text):
     # Create the Instructions button
     ins = Button(frames[2][0], text='Instructions',
-           command=lambda : open_instructions(root, text))
+                 command=lambda: open_instructions(root, text))
     ins.grid(row=2, column=1, pady=10, sticky='sew')
 
 

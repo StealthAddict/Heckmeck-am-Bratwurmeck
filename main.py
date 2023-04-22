@@ -1,7 +1,7 @@
-from tkinter import *
 import tkinter as tk
 from graphics import *
 from players import *
+
 
 def main():
     player_selection = Tk()
@@ -13,8 +13,8 @@ def main():
 
 class Board:
     def __init__(self):
-        self.__grill = [] # all available tiles on the board in ascending order.
-        self.__players = [] # list of Player objects playing the game
+        self.__grill = []  # all available tiles on the board
+        self.__players = []  # list of Player objects playing the game
         self.__next_player = 0  # index of next player
         self.__game_over = False
         self.txt_notif = StringVar()
@@ -29,18 +29,21 @@ class Board:
             if self.__grill[x] is not None:
                 if self.__grill[x]['status'] == 'grill':
                     if self.__grill[x]['val'] <= dice_pts:
-                        self.__grill[x]['object']['state'] = ['normal']
+                        self.__grill[x]['object']['state'] = 'normal'
                         available_tiles.append(self.__grill[x])
                     elif self.__grill[x]['val'] > dice_pts:
-                        self.__grill[x]['object']['state'] = ['disabled']  
+                        self.__grill[x]['object']['state'] = 'disabled'
 
-                elif self.__grill[x]['val'] == dice_pts and self.__grill[x]['status'] != 'OOP':
+                elif self.__grill[x]['val'] == dice_pts \
+                        and self.__grill[x]['status'] != 'OOP':
                     player = self.__grill[x]['status']
-                    if player.get_top_tile() == self.__grill[x] and player != curr_player:
-                        player._btn_top_tile['state'] = ['normal']
-                        player._btn_top_tile['command'] = self.__grill[x]['object']['command']
+                    if player.get_top_tile() == self.__grill[x] \
+                            and player != curr_player:
+                        player.btn_top_tile['state'] = 'normal'
+                        btn_cmd = self.__grill[x]['object']['command']
+                        player.btn_top_tile['command'] = btn_cmd
                         available_tiles.append(self.__grill[x])
-                    
+
                     self.__grill[x]['object']['state'] = ['disabled']
         return available_tiles
 
@@ -56,9 +59,9 @@ class Board:
         point_val = 1
         for x in range(21, 37):
             self.__grill.append({'val': x, 'points': point_val,
-                                 'status': 'grill', 
+                                 'status': 'grill',
                                  'object': grill_tiles[x - 21]})
-            
+
             # Calculates the correct point values for each tile
             if x % 4 == 0:
                 point_val += 1
@@ -102,16 +105,16 @@ class Board:
         # Activate the next player
         if not self.__game_over:
             if self.__next_player == 3:
-                self.__next_player = 0 
+                self.__next_player = 0
             else:
                 self.__next_player += 1
-                
+
             print(f'ACTIVATE PLAYER {self.__next_player + 1}')
             self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
             self.__players[self.__next_player].activate_play()
 
     def set_notification(self, new_string):
-        self.txt_notif.set(new_string)        
+        self.txt_notif.set(new_string)
 
     def remove_tile_from_play(self):
         """Disable the highest value tile on the grill
@@ -128,7 +131,7 @@ class Board:
                 break
 
     def game_over(self, end_condition):
-        """Ends the game. end_condition is a string 
+        """Ends the game. end_condition is a string
         that specifies why the game ended.
         """
         self.__game_over = True
@@ -140,7 +143,7 @@ class Board:
 
 def create_player_selection(root):
     # Creates the initial window asking for player count.
-    
+
     frame = Frame(root)
     frame.grid(row=0, column=0)
 
@@ -148,19 +151,21 @@ def create_player_selection(root):
     title.grid(row=1, column=1, columnspan=5, padx=5, pady=5)
 
     option_selected = StringVar()
-    
-    radio_p2 = Radiobutton(frame, width=15, value=2, text='2 Players', 
+
+    radio_p2 = Radiobutton(frame, width=15, value=2, text='2 Players',
                            variable=option_selected)
     radio_p2.grid(row=2, column=1)
     radio_p2.focus_set()
-    radio_p3 = Radiobutton(frame, width=15, value=3, text='3 Players', 
+    radio_p3 = Radiobutton(frame, width=15, value=3, text='3 Players',
                            variable=option_selected)
     radio_p3.grid(row=3, column=1)
-    radio_p4 = Radiobutton(frame, width=15, value=4, text='4 Players', 
+    radio_p4 = Radiobutton(frame, width=15, value=4, text='4 Players',
                            variable=option_selected)
     radio_p4.grid(row=4, column=1)
 
-    Button(frame, text='finished', command=lambda : open_main_window(root, option_selected)).grid(row=5, column=2)
+    fin = Button(frame, text='finished',
+                 command=lambda: open_main_window(root, option_selected))
+    fin.grid(row=5, column=2)
 
 
 def open_main_window(prev_win, num_players):
@@ -169,11 +174,9 @@ def open_main_window(prev_win, num_players):
     root = Tk()
     root.title('Heckmeck am Bratwurmeck')
     root.resizable(False, False)
-    
-    
 
     board = Board()
-    main_player = MainPlayer() # Human-controlled player
+    main_player = MainPlayer()  # Human-controlled player
     if num_players.get() == '':
         num_players = 2
     else:
@@ -192,11 +195,11 @@ def open_main_window(prev_win, num_players):
 
 def tksleep(t):
     """A function to emulate time.sleep in tkinter created
-    by Thingmabobs on StackOverflow 
+    by Thingmabobs on StackOverflow
     https://stackoverflow.com/a/74162322
     """
     'emulating time.sleep(seconds)'
-    ms = int(t*1000)
+    ms = int(t * 1000)
     root = tk._get_default_root('sleep')
     var = tk.IntVar(root)
     root.after(ms, var.set, 1)
