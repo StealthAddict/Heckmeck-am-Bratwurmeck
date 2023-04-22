@@ -8,7 +8,6 @@ def main():
     player_selection.title('Heckmeck am Bratwurmeck')
     player_selection.resizable(False, False)
     create_player_selection(player_selection)
-    # tk.Misc.tksleep = tksleep
     player_selection.mainloop()
 
 
@@ -20,7 +19,7 @@ class Board:
         self.__game_over = False
         self.txt_notif = StringVar()
 
-    def update_grill_status(self, dice_pts):
+    def update_grill_status(self, dice_pts, curr_player):
         """Update the button states of the grill's and players' top tiles
         according to the current roll points (dice_pts) of the player.
             Returns all available tiles to current player.
@@ -37,10 +36,12 @@ class Board:
 
                 elif self.__grill[x]['val'] == dice_pts and self.__grill[x]['status'] != 'OOP':
                     player = self.__grill[x]['status']
-                    if player.get_top_tile() == self.__grill[x]:
+                    if player.get_top_tile() == self.__grill[x] and player != curr_player:
                         player._btn_top_tile['state'] = ['normal']
+                        player._btn_top_tile['command'] = self.__grill[x]['object']['command']
                         available_tiles.append(self.__grill[x])
-
+                    
+                    self.__grill[x]['object']['state'] = ['disabled']
         return available_tiles
 
     def set_up_grill(self, grill_tiles):
@@ -67,23 +68,38 @@ class Board:
         from the grill to a player. Player is unable to choose
         a tile if they have no worm dice, indicated by W.
         """
+
         if player.has_worms():
             tile = self.__grill[tile_idx - 21]
             player.update_top_tile(tile)
-            player.end_turn()
 
-            self.__grill[tile_idx - 21]['status'] = player
-            self.__grill[tile_idx - 21]['object']['state'] = ['disabled']
+            # if another player has the tile
+            if self.__grill[tile_idx - 21]['status'] != 'grill':
+                old_player = self.__grill[tile_idx - 21]['status']
+                old_player.remove_top_tile(player)
+            else:
+                self.__grill[tile_idx - 21]['status'] = player
+                self.__grill[tile_idx - 21]['object']['state'] = ['disabled']
+
+            player.end_turn()
+            return True
         else:
             player.txt_notif.set("You don't have any worms!")
+            return False
 
     def assign_players(self, player_list):
         self.__players = player_list
 
     def activate_next_player(self):
         """Signals the next player to begin their turn if the game
-        has not ended.
+        has not ended and checks for win conditions.
         """
+        # Check if a player has won
+        for x in range(len(self.__players)):
+            if self.__players[x].get_victory_points() >= 7:
+                self.game_over(f'Player {x + 1} has won!')
+
+        # Activate the next player
         if not self.__game_over:
             if self.__next_player == 3:
                 self.__next_player = 0 
@@ -91,8 +107,8 @@ class Board:
                 self.__next_player += 1
                 
             print(f'ACTIVATE PLAYER {self.__next_player + 1}')
-            self.__players[self.__next_player].activate_play()
             self.set_notification(f'Player {self.__next_player + 1}\'s turn!')
+            self.__players[self.__next_player].activate_play()
 
     def set_notification(self, new_string):
         self.txt_notif.set(new_string)        
@@ -101,14 +117,14 @@ class Board:
         """Disable the highest value tile on the grill
         from play.
         """
-        for x in range(len(self.__grill), 0):
+        for x in range(len(self.__grill) - 1, -1, -1):
             if self.__grill[x]['status'] == 'grill':
                 self.__grill[x]['status'] = 'OOP'  # Out Of Play
+                self.__grill[x]['object']['text'] = 'OOP'
                 self.__grill[x]['object']['state'] = 'disabled'
 
                 if self.__grill[x]['val'] == 21:
                     self.game_over('No tiles left on the grill.')
-
                 break
 
     def game_over(self, end_condition):

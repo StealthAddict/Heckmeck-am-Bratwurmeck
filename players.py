@@ -113,11 +113,10 @@ class MainPlayer():
             available_tile = False
             grill = self.__board.get_grill()
             for x in grill:
-                if x['val'] > d_pts:
-                    self.__turn_bust("Can't purchase any tiles.")
-                    break
-                elif x['object']['state'] == 'normal':
+                if x['object']['state'] == 'normal':
                     available_tile = True
+                    break
+                elif x['val'] > d_pts:
                     break
             
             if not available_tile:
@@ -170,6 +169,9 @@ class MainPlayer():
             return self.__tiles[-1]
         return None
 
+    def get_victory_points(self):
+        return int(self.__lbl_victory_pts['text'])
+
     def has_worms(self):
         for x in self.__btns_dice_held:
             if x is not None and x['text'] == 'W':
@@ -182,6 +184,7 @@ class MainPlayer():
         Adds the tile onto the player's collection of tiles.
         """
         self._btn_top_tile['text'] = tile['object']['text']
+        self._btn_top_tile['state'] = 'disabled'
         if tile not in self.__tiles:
             self.__tiles.append(tile)
         else:
@@ -197,7 +200,7 @@ class MainPlayer():
             d_pts += 5 if x == 'W' else + x
             
         self.__lbl_dice_pts['text'] = f'({d_pts})'
-        self.__board.update_grill_status(d_pts)
+        self.__board.update_grill_status(d_pts, self)
 
         return d_pts
 
@@ -216,14 +219,22 @@ class MainPlayer():
         if len(self.__tiles) < 1:
             self.__board.remove_tile_from_play()
         else:
-            removed_tile = self.__tiles.pop(-1)
-            removed_tile['status'] = 'grill'
-            removed_tile['object']['state'] = ['disabled']
-            if len(self.__tiles) > 0:
-                self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+            self.remove_top_tile('grill')
 
         self.txt_notif.set(f'Busted!\n{bust_str}')
         self.end_turn() 
+
+    def remove_top_tile(self, new_location):
+        removed_tile = self.__tiles.pop(-1)
+        removed_tile['status'] = new_location
+        removed_tile['object']['state'] = ['disabled']
+        if len(self.__tiles) > 0:
+            self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+        else:
+            self._btn_top_tile['text'] = 'None'
+        self._btn_top_tile['state'] = 'disabled'
+
+        self.__update_victory_points()
 
     def end_turn(self):
         # Reset dice
@@ -267,13 +278,19 @@ class Player():
         self.__board = board
 
     def get_player_objects(self):
+        """Objects to be accessed by a child instance
+        """
         return {'board': self.__board, 'rolls kept': self.__rolls_kept,
-                'busted': self.__busted, 'lbls roll': self.__lbls_dice_roll}
+                'busted': self.__busted, 'lbls roll': self.__lbls_dice_roll,
+                'txt notif': self.txt_notif}
 
     def get_top_tile(self):
         if len(self.__tiles) > 0:
             return self.__tiles[-1]
         return None
+
+    def get_victory_points(self):
+        return int(self.__lbl_victory_pts['text'])
 
     def __get_ti_dice_cnt(self):
         """ Returns the total dice left in the roll and the 
@@ -291,8 +308,8 @@ class Player():
 
     def activate_play(self):
         self.deactivate_busted()
-        self.end_turn()
         self.txt_notif.set('')
+        self.end_turn()
 
     def deactivate_busted(self):
         self.__busted = False
@@ -319,7 +336,7 @@ class Player():
         if self.__btn_roll is not None:
             self.__btn_roll['state'] = ['disabled']
 
-        # TODO: Check if the player can choose from the roll
+        # Check if the player can choose from the roll
         invalid_dice, total_dice = self.__get_ti_dice_cnt()
         if invalid_dice == total_dice and total_dice != 0:  
             self.turn_bust("No selectable dice.")
@@ -341,19 +358,20 @@ class Player():
                 self.__lbls_dice_roll[x] = None
         
         d_pts = self.update_dice_points()
+        self.__board.update_grill_status(d_pts, self)
+        
 
-        # TODO: Check if any tiles are selectable after there are no
+        # Check if any tiles are selectable after there are no
         # more dice to roll.
         invalid_dice, total_dice = self.__get_ti_dice_cnt()
         if total_dice == 0:
             available_tile = False
             grill = self.__board.get_grill()
             for x in grill:
-                if x['val'] > d_pts:
-                    self.turn_bust("Can't purchase any tiles.")
-                    break
-                elif x['object']['state'] == 'normal':
+                if x['object']['state'] == 'normal':
                     available_tile = True
+                    break
+                elif x['val'] > d_pts:
                     break
             
             if not available_tile:
@@ -361,6 +379,24 @@ class Player():
 
             elif not self.has_worms():
                 self.turn_bust("You have no worms.")
+
+    def has_worms(self):
+        for x in self.__lbls_dice_held:
+            if x is not None and x['text'] == 'W':
+                return True
+            
+        return False
+
+    def update_top_tile(self, tile):
+        """ Updates the player's tile button to be the tile parameter.
+        Adds the tile onto the player's collection of tiles.
+        """
+        self._btn_top_tile['text'] = tile['object']['text']
+        self._btn_top_tile['state'] = 'disabled'
+        if tile not in self.__tiles:
+            self.__tiles.append(tile)
+        else:
+            self.__tiles.remove(tile)
 
     def update_dice_points(self):
         """ Update dice points label and
@@ -381,6 +417,18 @@ class Player():
 
         self.__lbl_victory_pts['text'] = points
 
+    def remove_top_tile(self, new_location):
+        removed_tile = self.__tiles.pop(-1)
+        removed_tile['status'] = new_location
+        removed_tile['object']['state'] = ['disabled']
+        if len(self.__tiles) > 0:
+            self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+        else:
+            self._btn_top_tile['text'] = 'None'
+        self._btn_top_tile['state'] = 'disabled'
+
+        self.__update_victory_points()
+
     def turn_bust(self, bust_str):
         """A bust causes the top tile of the player's
         tile stack to be returned to the grill. If no tiles
@@ -389,11 +437,7 @@ class Player():
         if len(self.__tiles) < 1:
             self.__board.remove_tile_from_play()
         else:
-            removed_tile = self.__tiles.pop(-1)
-            removed_tile['status'] = 'grill'
-            removed_tile['object']['state'] = ['disabled']
-            if len(self.__tiles) > 0:
-                self._btn_top_tile['text'] = self.__tiles[-1]['object']['text']
+            self.remove_top_tile('grill')
 
         self.txt_notif.set(f'Busted!\n{bust_str}')
         tksleep(2)
@@ -427,32 +471,46 @@ class CasualPlayer(Player):
         self.__dice_options = []
 
     def activate_play(self):
+        # Clean up before taking its turn
         self.deactivate_busted()
-        # Perform casual player's actions
-
+        self.get_player_objects()['txt notif'].set('')
+        
         board = self.get_player_objects()['board']
         busted = self.get_player_objects()['busted']
         dice_points = self.update_dice_points() 
-        available_tiles = board.update_grill_status(dice_points)
-        while (len(available_tiles) < 1) and not busted:
+        available_tiles = board.update_grill_status(dice_points, self)
+
+        # roll until they can select a tile
+        while (len(available_tiles) < 1) and (not busted):
             rolls = self.__parent.roll_dice()
             tksleep(1)
             self.__choose_dice(rolls)
-            # check if tiles are available
             dice_points = self.__parent.update_dice_points()
-            available_tiles = board.update_grill_status(dice_points)
+            available_tiles = board.update_grill_status(dice_points, self)
             busted = self.get_player_objects()['busted']
             tksleep(1)
 
         if busted: return # Prevent a CPU from ending its turn twice
 
         # select a tile
+        tile_idx = int(available_tiles[-1]['val'])
+        worms = board.pick_tile(self, tile_idx)
 
-        # end turn
-        tksleep(1)
-        self.txt_notif.set('')
+        # keep rolling until they get worms or bust
+        while not busted and not worms:
+            rolls = self.__parent.roll_dice()
+            tksleep(1)
+            self.__choose_dice(rolls)
+            dice_points = self.__parent.update_dice_points()
+            available_tiles = board.update_grill_status(dice_points, self)
+            busted = self.get_player_objects()['busted']
+
+            tksleep(1)
+            if busted: return
+            worms = board.pick_tile(self, tile_idx)
+
+        # turn end
         print("ENDING CASUAL TURN in [ACTIVE PLAY]")
-        self.__parent.end_turn()
 
     def __choose_dice(self, raw_rolls):
         rolls_kept = self.__parent.get_player_objects()['rolls kept']
@@ -465,7 +523,8 @@ class CasualPlayer(Player):
                 rolls.append(raw_rolls[x])
         
         for x in rolls:
-            if x not in self.__dice_options and x not in rolls_kept:
+            y = 'W' if x == 6 else x
+            if x not in self.__dice_options and y not in rolls_kept:
                 self.__dice_options.append(x)
 
         if len(self.__dice_options) < 1:

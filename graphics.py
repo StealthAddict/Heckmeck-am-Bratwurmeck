@@ -173,3 +173,7 @@ def generate_notification_square(row, col, frames, board):
     lbl_notif.grid(row=0, column=0)
     board.txt_notif.set('It\'s your turn!')
     lbl_notif['textvariable'] =  board.txt_notif
+
+
+def generate_instructions(row, col, frames):
+    pass
