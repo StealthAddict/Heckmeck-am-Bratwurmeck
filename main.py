@@ -170,9 +170,10 @@ def open_main_window(prev_win, num_players):
     root.title('Heckmeck am Bratwurmeck')
     root.resizable(False, False)
     
+    
+
     board = Board()
     main_player = MainPlayer() # Human-controlled player
-
     if num_players.get() == '':
         num_players = 2
     else:
@@ -185,6 +186,8 @@ def open_main_window(prev_win, num_players):
 
     frames = create_label_frames(root)
     create_game_labels(frames, players, board)
+    instruction_text = open('instructions.txt').read()
+    generate_instructions(frames, root, instruction_text)
 
 
 def tksleep(t):

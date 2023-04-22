@@ -12,7 +12,7 @@ def create_label_frames(root):
         frame_row = []
         for col in range(3):
             frame = LabelFrame(main_frame)
-            frame.grid(row=row, column=col, sticky='ew')
+            frame.grid(row=row, column=col, sticky='nsew')
             frame_row.append(frame)
         frames.append(frame_row)
     
@@ -136,7 +136,7 @@ def generate_grill(row, col, frames, main_player, board):
     col = 0
     for x in range(21, 37):
             bratwurm_tile = Button(grill_frame, state=['disabled'], 
-                           text=f'{x} Worms\n{point_val} Pts')
+                           text=f'{x}\n{point_val} Worm(s)')
             bratwurm_tile.grid(row=point_val, column=col)
             grill_tiles.append(bratwurm_tile)
 
@@ -169,11 +169,28 @@ def generate_notification_square(row, col, frames, board):
     """Modifies a space to display general notifications to the players.
     Modifies board to have control over the text via a StringVar.
     """
-    lbl_notif = Label(frames[row][col])
-    lbl_notif.grid(row=0, column=0)
+    this_frame = frames[row][col]
+    this_frame.rowconfigure(1, weight=1)
+    this_frame.columnconfigure(0, weight=1)
+    this_frame.columnconfigure(2, weight=1)
+    
+    lbl_notif = Label(this_frame)
+    lbl_notif.grid(row=0, column=1, sticky='new')
     board.txt_notif.set('It\'s your turn!')
     lbl_notif['textvariable'] =  board.txt_notif
 
 
-def generate_instructions(row, col, frames):
-    pass
+def generate_instructions(frames, root, text):
+    # Create the Instructions button
+    ins = Button(frames[2][0], text='Instructions',
+           command=lambda : open_instructions(root, text))
+    ins.grid(row=2, column=1, pady=10, sticky='sew')
+
+
+def open_instructions(root, in_text):
+    # Open a new window with game instructions
+    instr_window = Toplevel(root)
+    instr_window.title('Instructions')
+    instr_window.geometry('450x650')
+
+    Label(instr_window, text=in_text).pack()
